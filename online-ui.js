@@ -184,7 +184,7 @@ export class OnlineUI{
     if(st.phase!=='finished'){
       const who=st.players[st.order[st.turn]];
       $('#online-banner').textContent=offline?'⚠️ Anfitrião desconectado. Aguardando reconexão.'
-        :st.phase==='power'?'⚡ '+who.name+' lançou um superpoder!'
+        :(st.phase==='power'||st.feedback?.kind==='power')?'⚡ '+who.name+' lançou um superpoder!'
         :st.phase==='feedback'?'🎯 '+who.name+' finalizou a resposta.'
         :st.phase==='question'?'⏱️ '+who.name+' tem 30 segundos para responder.'
         :'🎲 Preparando a vez de '+who.name+'.';
@@ -214,7 +214,7 @@ export class OnlineUI{
     }
     close('#online-victory');
     // A power attack replaces this question; the board shows its full animation.
-    if(!active||st.phase==='power'){close('#online-turn');return}
+    if(!active||st.phase==='power'||st.feedback?.kind==='power'){close('#online-turn');return}
     const person=st.players[this.rooms.uid];
     $('#online-turn-avatar').src=avatar(person.avatar);
     renderText($('#online-turn-name'),person.name);

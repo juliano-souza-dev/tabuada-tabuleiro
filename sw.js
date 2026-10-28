@@ -1,6 +1,7 @@
-const CACHE='tabuada-v10';
+const CACHE='tabuada-v11';
 const ASSETS=[
  './','./index.html','./style.css','./app.js','./weather.js','./sound.js','./audio-test.js',
+ './online.js','./online-logic.js','./online-ui.js','./firebase-config.js',
  './manifest.webmanifest','./assets/path.json','./assets/special-spaces.json',
  './assets/mapa-oficial.webp',
  ...['trap','quicksand','portal','chest'].map(n=>'./assets/events/'+n+'.svg'),
@@ -14,5 +15,17 @@ self.addEventListener('activate',event=>event.waitUntil(
 ));
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ const url=new URL(event.request.url);
+ if(url.pathname.endsWith('/firebase-config.js')){
+  // Updated Firebase configuration should be effective after the next online reload.
+  event.respondWith(fetch(event.request).then(response=>{
+   if(response.ok){
+    const copy=response.clone();
+    event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)));
+   }
+   return response;
+  }).catch(()=>caches.match(event.request)));
+  return;
+ }
  event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request)));
 });

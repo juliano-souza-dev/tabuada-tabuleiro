@@ -272,9 +272,9 @@ export class FirebaseRooms{
           // A guest can only delete their own seat. The host updates the match.
           // The old database rules already allow writing this presence flag.
           // The host will remove the seat within its next reconciliation tick.
-          await set(presence,false);
           const slot=Object.keys(room?.seats||{}).find(index=>room.seats[index]?.uid===uid);
           if(slot!==undefined){
+            await set(presence,false);
             try{await remove(ref(this.db,base+'/seats/'+slot))}
             catch(error){console.info('Anfitrião concluirá a saída do jogador.',error)}
           }

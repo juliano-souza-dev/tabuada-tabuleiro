@@ -239,7 +239,7 @@ export class FirebaseRooms{
     this.leaving=true;
     const room=this.room,code=this.roomCode,uid=this.uid;
     try{
-      if(code&&this.db&&uid){
+      if(code&&this.db&&uid&&room){
         const {ref,remove,set,onDisconnect,runTransaction}=this.sdk;
         const base='rooms/'+code;
         const presence=ref(this.db,base+'/presence/'+uid);

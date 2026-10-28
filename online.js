@@ -165,11 +165,30 @@ export class FirebaseRooms{
     url.searchParams.set('room',this.roomCode);
     return url.toString();
   }
+  async removeSeat(index){
+    if(!this.amHost||this.room.state?.phase!=='lobby'||index<1||index>4)return;
+    await this.sdk.remove(this.sdk.ref(this.db,this.roomPath('seats/'+index)));
+  }
   async leave(){
+    const room=this.room,code=this.roomCode,uid=this.uid;
     for(const unsubscribe of this.unsub.splice(1)){try{unsubscribe()}catch(e){}}
     if(this.hostTickTimer){clearInterval(this.hostTickTimer);this.hostTickTimer=null}
-    if(this.roomCode&&this.db&&this.uid){
-      try{await this.sdk.set(this.sdk.ref(this.db,this.roomPath('presence/'+this.uid)),false)}catch(e){}
+    if(code&&this.db&&uid){
+      const {ref,remove,set,onDisconnect}=this.sdk;
+      const base='rooms/'+code;
+      try{
+        const presence=ref(this.db,base+'/presence/'+uid);
+        await onDisconnect(presence).cancel();
+        if(room?.state?.phase==='lobby'&&room.hostId===uid){
+          await remove(ref(this.db,base));
+        }else{
+          await set(presence,false);
+          if(room?.state?.phase==='lobby'){
+            const seat=Object.entries(room.seats||{}).find(([,value])=>value?.uid===uid);
+            if(seat)await remove(ref(this.db,base+'/seats/'+seat[0]));
+          }
+        }
+      }catch(error){console.warn('Não foi possível atualizar a presença ao sair.',error)}
     }
     this.roomCode=null;this.room=null;
   }

@@ -29,7 +29,7 @@ const diceFaces=['⚀','⚁','⚂','⚃','⚄','⚅'];
 let players=[],turn=0,pending=null,phase='setup',completedTurns=0;
 let toastTimer=null;
 
-const QUESTION_SECONDS=60;
+const QUESTION_SECONDS=30;
 const POWER_MAX=3;
 const POWER_EFFECTS=['back2','back3','skip'];
 let answerDeadline=0;

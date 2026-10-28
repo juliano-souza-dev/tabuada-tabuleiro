@@ -69,7 +69,12 @@
     <div id="die" class="die" aria-label="Dado">🎲</div>
     <p id="turn-help">Lance o dado e acerte a multiplicação para avançar!</p>
     <h3 id="question" class="question" hidden></h3>
+    <div id="question-timer" class="question-timer" role="timer" aria-label="60 segundos para responder" hidden>
+      <div class="timer-top"><span>⏱️ Tempo para responder</span><strong><span id="timer-count">60</span>s</strong></div>
+      <div class="timer-track" aria-hidden="true"><div id="timer-bar" class="timer-bar"></div></div>
+    </div>
     <div id="options" class="options" hidden></div>
+    <p id="answer-feedback" class="answer-feedback" role="status" aria-live="polite" hidden></p>
     <button id="roll" class="primary-button roll-button" type="button">🎲 Lançar dado</button>
     <button id="reconfigure" class="quiet-button" type="button">Trocar jogadores</button>
   </dialog>

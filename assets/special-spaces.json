@@ -1,0 +1,34 @@
+[
+  {
+    "position": 4,
+    "type": "chest"
+  },
+  {
+    "position": 8,
+    "type": "trap"
+  },
+  {
+    "position": 13,
+    "type": "portal"
+  },
+  {
+    "position": 18,
+    "type": "quicksand"
+  },
+  {
+    "position": 22,
+    "type": "chest"
+  },
+  {
+    "position": 27,
+    "type": "trap"
+  },
+  {
+    "position": 31,
+    "type": "portal"
+  },
+  {
+    "position": 35,
+    "type": "quicksand"
+  }
+]

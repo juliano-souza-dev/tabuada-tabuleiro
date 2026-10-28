@@ -29,6 +29,8 @@ let players=[],turn=0,pending=null,phase='setup',completedTurns=0;
 let toastTimer=null;
 
 const QUESTION_SECONDS=60;
+const POWER_MAX=3;
+const POWER_EFFECTS=['back2','back3','skip'];
 let answerDeadline=0;
 let questionInterval=null;
 function stopQuestionTimer(){
@@ -172,12 +174,27 @@ function renderTokens(){
     if(Number(node.dataset.player)>=players.length)node.remove();
   });
 }
+function renderPowerMeter(node,power){
+  node.replaceChildren();
+  for(let i=0;i<POWER_MAX;i++){
+    const segment=document.createElement('span');
+    segment.className='power-segment'+(i<power?' charged':'');
+    node.append(segment);
+  }
+}
+function powerMeter(power){
+  const meter=document.createElement('span');
+  meter.className='power-meter';
+  meter.setAttribute('aria-hidden','true');
+  renderPowerMeter(meter,power);
+  return meter;
+}
 function renderPlayers(){
   const root=$('#players');
   root.replaceChildren();
   players.forEach((player,index)=>{
     const item=document.createElement('div');
-    item.className='player'+(index===turn?' active':'');
+    item.className='player'+(index===turn?' active':'')+(player.power>=POWER_MAX?' power-ready':'');
     item.style.borderBottom='2px solid '+colors[index];
     const image=document.createElement('img');
     image.src=avatar(player.avatar);
@@ -186,7 +203,14 @@ function renderPlayers(){
     name.textContent=player.name;
     const count=document.createElement('small');
     count.textContent=(player.pos+1)+'/40'+(player.skipTurns?' 🕳️':'');
-    item.append(image,name,count);
+    const info=document.createElement('span');
+    info.className='player-info';
+    const top=document.createElement('span');
+    top.className='player-top';
+    top.append(name,count);
+    info.append(top,powerMeter(player.power));
+    item.title=player.name+' · superpoder '+player.power+'/'+POWER_MAX;
+    item.append(image,info);
     root.append(item);
   });
 }
@@ -222,6 +246,9 @@ function openTurnPopup(){
   $('#turn-name').textContent=player.name;
   $('#turn-progress').textContent='Casa '+(player.pos+1)+' de '+route.length;
   $('#turn-number').textContent='Vez do jogador '+(turn+1);
+  $('#turn-power-count').textContent=player.power+'/'+POWER_MAX;
+  renderPowerMeter($('#turn-power-meter'),player.power);
+  $('#power-launch').hidden=player.power<POWER_MAX;
   $('#die').textContent='🎲';
   $('#die').classList.remove('rolling');
   $('#turn-help').textContent='Lance o dado e acerte a multiplicação para avançar!';
@@ -241,7 +268,7 @@ function openTurnPopup(){
   sound.play('turn');
 }
 function openSetup(){
-  if(phase==='moving'||phase==='rolling'||phase==='feedback')return;
+  if(phase==='moving'||phase==='rolling'||phase==='feedback'||phase==='power')return;
   stopQuestionTimer();
   sound.stop();
   pending=null;
@@ -260,7 +287,7 @@ function startGame(){
   players=[...$('#roster').children].map((box,index)=>({
     name:box.querySelector('input').value.trim()||'Jogador '+(index+1),
     avatar:box.querySelector('.avatar-choices button.selected')?.title||defaults[index],
-    pos:0,skipTurns:0
+    pos:0,skipTurns:0,power:0
   }));
   turn=0;
   pending=null;
@@ -268,6 +295,7 @@ function startGame(){
   phase='ready';
   document.body.classList.add('playing');
   $('#pieces').replaceChildren();
+  $('#power-effects').replaceChildren();
   renderSpecialMarkers();
   setWeather();
   render();
@@ -376,6 +404,11 @@ async function submitAnswer(value){
     $('#timer-bar').style.width='0%';
     $('#question-timer').classList.add('urgent');
   }
+  if(correct){
+    player.power=Math.min(POWER_MAX,player.power+1);
+    renderPlayers();
+    feedback.textContent+=player.power===POWER_MAX?' ⚡ Superpoder pronto!':' ⚡ Energia '+player.power+'/'+POWER_MAX+'.';
+  }
   sound.play(correct?'correct':'wrong');
   await sleep(correct?700:2600);
   if(phase!=='feedback')return;
@@ -396,6 +429,56 @@ async function submitAnswer(value){
   setWeather();
   await sleep(650);
   await goToNextPlayer();
+}
+async function launchSuperpower(){
+  if(phase!=='ready'||players.length<2)return;
+  const attacker=players[turn];
+  if(attacker.power<POWER_MAX)return;
+  // Exclude the caster: the target is one of the other players.
+  const opponents=players.filter((_,index)=>index!==turn);
+  const target=opponents[rand(0,opponents.length-1)];
+  const effect=POWER_EFFECTS[rand(0,POWER_EFFECTS.length-1)];
+  phase='power'; // Prevent duplicate shots, dice rolls or setup interruptions.
+  attacker.power=0;
+  $('#power-launch').disabled=true;
+  $('#turn-dialog').close();
+  renderPlayers();
+  showToast('⚡ '+attacker.name+' lançou um superpoder!',0);
+  sound.play('portal');
+  const origin=route[attacker.pos];
+  const hit=route[target.pos];
+  const bounds=$('#board').getBoundingClientRect();
+  const projectile=document.createElement('span');
+  projectile.className='power-projectile';
+  projectile.textContent='⚡';
+  projectile.style.setProperty('--origin-x',origin.x+'%');
+  projectile.style.setProperty('--origin-y',origin.y+'%');
+  projectile.style.setProperty('--travel-x',((hit.x-origin.x)*bounds.width/100)+'px');
+  projectile.style.setProperty('--travel-y',((hit.y-origin.y)*bounds.height/100)+'px');
+  $('#power-effects').append(projectile);
+  await sleep(850);
+  projectile.remove();
+  const impact=document.createElement('span');
+  impact.className='power-impact';
+  impact.style.setProperty('--hit-x',hit.x+'%');
+  impact.style.setProperty('--hit-y',hit.y+'%');
+  $('#power-effects').append(impact);
+  sound.play('trap');
+  await sleep(530);
+  impact.remove();
+  if(effect==='skip'){
+    target.skipTurns+=1;
+    showToast('⚡ '+target.name+' foi atingido e perderá a próxima rodada!',0);
+    render();
+  }else{
+    const amount=effect==='back2'?2:3;
+    showToast('⚡ '+target.name+' foi atingido! Volta '+amount+' casas.',0);
+    await moveTo(target,target.pos-amount);
+    render();
+  }
+  // Superpower landings do not activate special spaces and do not spend a regular turn.
+  await sleep(1550);
+  openTurnPopup();
 }
 async function rollDice(){
   if(phase!=='ready')return;
@@ -436,6 +519,7 @@ async function rollDice(){
 $('#count').addEventListener('change',renderRoster);
 $('#start').addEventListener('click',startGame);
 $('#roll').addEventListener('click',rollDice);
+$('#power-launch').addEventListener('click',launchSuperpower);
 $('#reconfigure').addEventListener('click',openSetup);
 $('#restart').addEventListener('click',openSetup);
 $('#play-again').addEventListener('click',openSetup);

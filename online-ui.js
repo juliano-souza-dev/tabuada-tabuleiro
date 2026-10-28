@@ -112,13 +112,21 @@ export class OnlineUI{
     renderText($('#online-room-code'),code);
     const roster=$('#online-roster');
     roster.replaceChildren();
-    for(const person of sortedSeats(room)){
+    for(const [seatNumber,person] of Object.entries(room.seats||{}).sort(([a],[b])=>Number(a)-Number(b))){
       const item=document.createElement('div');item.className='online-roster-item';
       const icon=document.createElement('img');icon.src=avatar(person.avatar);icon.alt='';
       const label=document.createElement('strong');label.textContent=person.name;
       const suffix=document.createElement('small');suffix.textContent=person.uid===room.hostId?'👑 Anfitrião':'Jogador';
       const connected=document.createElement('span');connected.className='connection'+(room.presence?.[person.uid]?'':' offline');
-      item.append(icon,label,suffix,connected);roster.append(item);
+      item.append(icon,label,suffix,connected);
+      if(this.rooms.amHost&&seatNumber!=='0'){
+        const remove=document.createElement('button');
+        remove.type='button';remove.className='seat-remove';
+        remove.textContent='Remover';remove.title='Remover jogador da sala';
+        remove.addEventListener('click',()=>void this.rooms.removeSeat(Number(seatNumber)).catch(error=>this.error(error.message)));
+        item.append(remove);
+      }
+      roster.append(item);
     }
     const total=sortedSeats(room).length;
     const host=this.rooms.amHost;
@@ -132,7 +140,13 @@ export class OnlineUI{
   }
   onRoom(room,code){
     if(!this.active)return;
-    if(!room){this.error('A sala não está mais disponível.');return}
+    if(!room){
+      close('#online-lobby');close('#online-turn');close('#online-victory');
+      open('#online-entry');
+      this.error('Esta sala foi encerrada. Você pode entrar em outra.');
+      void this.rooms.leave();
+      return;
+    }
     if(room.state?.phase==='lobby'){
       this.revision=null;this.prevEvent=0;this.lastState=null;
       this.showLobby(room,code);

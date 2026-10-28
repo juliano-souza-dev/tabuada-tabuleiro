@@ -557,7 +557,7 @@ const onlineUI=new OnlineUI({
     renderPlayers();
     document.body.classList.remove('playing');
   },
-  onGesture:()=>{void sound.unlock()},
+  onGesture:()=>{configureFullscreen();void sound.unlock()},
   onSound:name=>sound.play(name),
   onBoard:state=>{
     onlineAnimationVersion++;

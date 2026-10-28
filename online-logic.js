@@ -1,8 +1,9 @@
+import specialSpaces from './assets/special-spaces.json' with {type:'json'};
 // Regras compartilhadas para o modo online; o anfitrião aplica as ações.
 export const ANSWER_SECONDS=60;
 export const POWER_STEPS=3;
 export const LAST_SQUARE=39;
-export const EVENTS={4:'trap',8:'quicksand',13:'portal',18:'chest',22:'trap',27:'quicksand',31:'portal',35:'chest'};
+export const EVENTS=Object.fromEntries(specialSpaces.map(({position,type})=>[position,type]));
 export const bounded=value=>Math.max(0,Math.min(LAST_SQUARE,value));
 const roll=(min,max,random)=>Math.floor(random()*(max-min+1))+min;
 const optionsFor=(answer,random)=>{

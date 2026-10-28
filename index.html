@@ -16,6 +16,7 @@
     <img id="map-image" src="assets/mapa-oficial.webp" alt="Mapa de aventura com uma trilha contínua do porto até o castelo" draggable="false">
     <div id="events" aria-hidden="true"></div>
     <div id="pieces" aria-label="Posições dos jogadores"></div>
+    <div id="power-effects" aria-hidden="true"></div>
     <canvas id="weather-canvas" aria-hidden="true"></canvas>
     <div id="weather-fallback" aria-hidden="true" hidden></div>
   </section>
@@ -66,6 +67,11 @@
         <p id="turn-progress">Casa 1 de 40</p>
       </div>
     </div>
+    <div id="turn-power" class="turn-power" aria-label="Energia de superpoder">
+      <span class="power-caption"><span>⚡ Superpoder</span><strong id="turn-power-count">0/3</strong></span>
+      <span id="turn-power-meter" class="power-meter" aria-hidden="true"></span>
+    </div>
+    <button id="power-launch" class="power-launch" type="button" hidden>⚡ Lançar superpoder!</button>
     <div id="die" class="die" aria-label="Dado">🎲</div>
     <p id="turn-help">Lance o dado e acerte a multiplicação para avançar!</p>
     <h3 id="question" class="question" hidden></h3>

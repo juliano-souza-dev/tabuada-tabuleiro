@@ -249,6 +249,7 @@ function openTurnPopup(){
   $('#turn-power-count').textContent=player.power+'/'+POWER_MAX;
   renderPowerMeter($('#turn-power-meter'),player.power);
   $('#power-launch').hidden=player.power<POWER_MAX;
+  $('#power-launch').disabled=false;
   $('#die').textContent='🎲';
   $('#die').classList.remove('rolling');
   $('#turn-help').textContent='Lance o dado e acerte a multiplicação para avançar!';

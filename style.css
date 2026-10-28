@@ -189,3 +189,57 @@ button:disabled{opacity:.55;cursor:not-allowed}
  .power-projectile::before{animation:none}
  .power-segment{transition:none}
 }
+
+/* Salas online: reutiliza a identidade visual e funciona em landscape no celular */
+.mode-dialog{width:min(410px,93vw)}
+.mode-dialog .primary-button{margin-top:13px}
+.mode-dialog .online-main-button{background:linear-gradient(140deg,#a7f4f0,#50cbeb);box-shadow:0 4px 0 #328aa8}
+.mode-note{font-size:12px!important;color:#cbddf0}
+.online-entry,.online-lobby{text-align:center;width:min(450px,94vw)}
+.online-entry label{display:block;text-align:left;font-size:12px;font-weight:800;margin:9px 0 4px}
+.online-entry input,.online-entry select{border:1px solid #8fadc5;border-radius:10px;background:#092843;color:white;font:inherit;padding:10px;width:100%;outline-color:#ffda83;min-height:40px}
+.online-entry-actions{margin-top:10px}
+.online-entry-actions .primary-button{margin:9px 0}
+.join-line{display:flex;align-items:center;gap:7px}
+.join-line input{text-transform:uppercase;letter-spacing:.17em;font-weight:900;text-align:center;flex:1;min-width:0}
+.join-line button{padding:10px 15px;background:#90e9ed;color:#062a40;border:0;border-radius:10px;font-weight:900}
+.online-error{padding:8px;border:1px solid #ffb5a6;background:#8c324266;border-radius:10px;color:#ffe4df;font-size:13px!important}
+.online-error[hidden]{display:none}
+.room-code{display:grid;gap:2px;justify-items:center;background:#061d3b85;border:1px solid #ffd97673;padding:8px 18px;border-radius:14px;margin:10px 0 0}
+.room-code span{font-size:11px;color:#d3e8f8;font-weight:750}
+.room-code strong{letter-spacing:.16em;color:#fff2b0;font-size:clamp(24px,5vw,34px);font-variant-numeric:tabular-nums}
+.online-roster{display:grid;gap:6px;margin:12px auto}
+.online-roster-item{display:flex;align-items:center;gap:9px;background:#ffffff14;border:1px solid #ffffff26;border-radius:11px;padding:5px 10px;text-align:left;font-size:13px}
+.online-roster-item img{width:32px;height:39px;object-fit:contain}
+.online-roster-item strong{flex:1;overflow:hidden;text-overflow:ellipsis}
+.online-roster-item small{font-size:10px;color:#ffe6a3}
+.online-roster-item .connection{width:8px;height:8px;background:#5beaac;border-radius:50%;box-shadow:0 0 7px #5beaac55}
+.online-roster-item .connection.offline{background:#a5a8b1;box-shadow:none}
+#online-lobby-hint{color:#d6e8f9;font-size:12px}
+.online-banner{position:absolute;z-index:6;left:50%;bottom:max(15px,env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(560px,89vw);min-width:170px;background:#092a46ed;border:1px solid #ffdb8799;border-radius:12px;padding:9px 16px;text-align:center;font-size:clamp(11px,1.5vw,14px);font-weight:800;pointer-events:none;box-shadow:0 6px 20px #0008}
+.online-banner[hidden]{display:none}
+.online-turn .turn-power{padding-top:4px}
+#online-power[hidden],#online-timer[hidden],#online-question[hidden],#online-options[hidden],#online-feedback[hidden],#online-roll[hidden]{display:none}
+@media(max-height:470px) and (orientation:landscape){
+ .mode-dialog,.online-entry,.online-lobby{max-height:94dvh;padding:10px 14px}
+ .mode-dialog .primary-button{margin-top:7px;padding:7px}
+ .mode-note{margin:5px!important}
+ .online-entry{width:min(640px,95vw)}
+ .online-entry label{font-size:11px;margin:3px 0 2px}
+ .online-entry input,.online-entry select{min-height:30px;padding:4px 8px;font-size:12px}
+ .online-entry-actions{margin-top:4px}
+ .online-entry-actions .primary-button{margin:3px 0;padding:6px;font-size:13px}
+ .join-line button{padding:6px 10px;font-size:12px}
+ .online-lobby{width:min(570px,95vw)}
+ .online-lobby h2{font-size:20px}
+ .online-lobby p{margin:3px}
+ .room-code{padding:3px;margin:3px 0 0}
+ .room-code strong{font-size:22px}
+ .online-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:4px 0}
+ .online-roster-item{padding:2px 5px;font-size:11px}
+ .online-roster-item img{height:25px;width:22px}
+ .online-turn .turn-player img{height:39px}
+ .online-turn .turn-player h2{font-size:17px}
+ .online-turn .turn-power{padding:1px 3px}
+ .online-turn .power-launch{margin:0;padding:4px}
+}

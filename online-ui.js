@@ -163,7 +163,13 @@ export class OnlineUI{
         this.prevEvent=event.id;
         this.reactEvent(st,event);
       }
-      this.renderTurn(st);
+      if(st.phase==='finished'&&st.endReason==='last-player'&&st.event?.kind==='last-player'){
+        close('#online-turn');
+        const revision=st.rev;
+        setTimeout(()=>{
+          if(this.active&&this.lastState?.rev===revision)this.renderTurn(st);
+        },1550);
+      }else this.renderTurn(st);
     }
     if(st.phase!=='finished'){
       const who=st.players[st.order[st.turn]];
@@ -180,11 +186,19 @@ export class OnlineUI{
     const active=st.order[st.turn]===this.rooms.uid;
     if(st.phase==='finished'){
       close('#online-turn');
-      const winner=st.players[st.winner]||{name:'Jogador',avatar:'masculino-01'};
+      const lastPlayer=st.endReason==='last-player';
+      const winner=st.players[st.winner]||st.winnerInfo||{name:'Jogador',avatar:'masculino-01'};
       $('#online-winner-avatar').src=avatar(winner.avatar);
-      renderText($('#online-winner-message'),winner.name+' chegou ao castelo e venceu!');
-      $('#online-rematch').hidden=!this.rooms.amHost;
-      $('#online-rematch-wait').hidden=this.rooms.amHost;
+      $('#online-victory-title').textContent=lastPlayer?'🏁 Partida encerrada':'Temos um vencedor!';
+      const symbol=$('#online-victory .trophy');
+      if(symbol)symbol.textContent=lastPlayer?'🏁':'🏆';
+      renderText($('#online-winner-message'),lastPlayer
+        ?'A partida terminou porque só restou '+winner.name+'. Obrigado por jogar! Você pode iniciar outra aventura quando quiser.'
+        :winner.name+' chegou ao castelo e venceu!');
+      const canRematch=this.rooms.amHost&&st.order.length>=2;
+      $('#online-rematch').hidden=!canRematch;
+      $('#online-rematch-wait').hidden=lastPlayer||this.rooms.amHost;
+      $('#online-finish').textContent=lastPlayer?'Voltar ao início':'Concluir';
       open('#online-victory');
       return;
     }
@@ -271,7 +285,15 @@ export class OnlineUI{
   }
   reactEvent(state,event){
     const player=state.players[event.actor];
-    if(event.kind==='power'){
+    if(event.departed){
+      this.announce('👋 '+(event.departedName||'Um jogador')+' saiu da partida.'+
+        (event.kind==='last-player'?' Encerrando de forma tranquila...':''));
+    }
+    if(event.kind==='last-player'){
+      this.callbacks.onSound('turn');
+    }else if(event.kind==='leave'){
+      this.callbacks.onSound('skip');
+    }else if(event.kind==='power'){
       const target=state.players[event.target];
       const labels={back2:'voltou 2 casas',back3:'voltou 3 casas',skip:'perderá a próxima rodada'};
       this.announce('⚡ '+player.name+' atingiu '+target.name+': '+labels[event.effect]+'!');

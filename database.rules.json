@@ -6,7 +6,7 @@
       "$code": {
         ".read": "auth != null",
         ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() === auth.uid && newData.child('state/phase').val() === 'lobby') || data.child('hostId').val() === auth.uid)",
-        ".validate": "newData.hasChildren(['hostId','createdAt','state','seats']) && (!data.exists() || newData.child('hostId').val() === data.child('hostId').val())",
+        ".validate": "newData.hasChildren(['hostId','createdAt','state','seats']) && (newData.child('hostId').val() === data.child('hostId').val() || (auth != null && data.child('hostId').val() === auth.uid && (newData.child('seats/0/uid').val() === newData.child('hostId').val() || newData.child('seats/1/uid').val() === newData.child('hostId').val() || newData.child('seats/2/uid').val() === newData.child('hostId').val() || newData.child('seats/3/uid').val() === newData.child('hostId').val() || newData.child('seats/4/uid').val() === newData.child('hostId').val())))",
         "hostId": {
           ".validate": "newData.isString() && newData.val().length > 5"
         },
@@ -15,7 +15,7 @@
         },
         "seats": {
           "$seat": {
-            ".write": "(auth != null && ($seat === '1' || $seat === '2' || $seat === '3' || $seat === '4') && !data.exists() && root.child('rooms/'+$code+'/state/phase').val() === 'lobby' && newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/seats/0/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/1/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/2/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/3/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/4/uid').val() !== auth.uid) || (auth != null && ($seat === '1' || $seat === '2' || $seat === '3' || $seat === '4') && root.child('rooms/'+$code+'/state/phase').val() === 'lobby' && data.child('uid').val() === auth.uid && !newData.exists())",
+            ".write": "(auth != null && ($seat === '1' || $seat === '2' || $seat === '3' || $seat === '4') && !data.exists() && root.child('rooms/'+$code+'/state/phase').val() === 'lobby' && newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/seats/0/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/1/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/2/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/3/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/4/uid').val() !== auth.uid) || (auth != null && ($seat === '1' || $seat === '2' || $seat === '3' || $seat === '4') && data.child('uid').val() === auth.uid && !newData.exists())",
             ".validate": "newData.hasChildren(['uid','name','avatar','joinedAt'])",
             "uid": {
               ".validate": "newData.isString() && newData.val().length > 5"
@@ -35,7 +35,7 @@
           }
         },
         "state": {
-          ".validate": "newData.hasChildren(['phase','rev','turn','rounds']) && newData.child('phase').isString() && (newData.child('phase').val() === 'lobby' || newData.child('phase').val() === 'ready' || newData.child('phase').val() === 'question' || newData.child('phase').val() === 'feedback' || newData.child('phase').val() === 'finished')"
+          ".validate": "newData.hasChildren(['phase','rev','turn','rounds']) && newData.child('phase').isString() && (newData.child('phase').val() === 'lobby' || newData.child('phase').val() === 'ready' || newData.child('phase').val() === 'question' || newData.child('phase').val() === 'feedback' || newData.child('phase').val() === 'power' || newData.child('phase').val() === 'finished')"
         },
         "commands": {
           "$command": {

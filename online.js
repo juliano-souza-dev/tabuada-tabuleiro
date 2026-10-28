@@ -115,7 +115,7 @@ export class FirebaseRooms{
     if(!this.amHost)throw Error('Somente o criador da sala pode iniciar.');
     const {ref,get,runTransaction}=this.sdk;
     const fresh=(await get(ref(this.db,this.roomPath('seats')))).val()||{};
-    const initial=newGame(fresh);
+    const initial=newGame(fresh,this.now());
     await runTransaction(ref(this.db,this.roomPath('state')),state=>{
       if(!state||(state.phase!=='lobby'&&state.phase!=='finished'))return;
       return initial;
@@ -124,7 +124,7 @@ export class FirebaseRooms{
   async command(kind,value=null){
     if(!this.room||!this.uid)throw Error('Entre em uma sala primeiro.');
     if(!this.room.state?.order?.includes(this.uid))throw Error('Você não está nesta partida.');
-    if(!['roll','answer','power'].includes(kind))throw Error('Ação inválida.');
+    if(!['answer','power'].includes(kind))throw Error('Ação inválida.');
     const {ref,push,set}=this.sdk;
     const actionRef=push(ref(this.db,this.roomPath('commands')));
     await set(actionRef,{actor:this.uid,kind,value:kind==='answer'?Number(value):0,at:this.now()});
@@ -149,8 +149,9 @@ export class FirebaseRooms{
   async tick(){
     if(this.ticking||!this.amHost||!this.room?.state)return;
     const current=this.room.state;
-    const due=(current.phase==='question'&&current.question&&this.now()>=current.question.deadline)||
-      (current.phase==='feedback'&&current.feedback&&this.now()>=current.feedback.until);
+    const due=current.phase==='ready'||
+      (current.phase==='question'&&current.question&&this.now()>=current.question.deadline)||
+      ((current.phase==='feedback'||current.phase==='power')&&current.feedback&&this.now()>=current.feedback.until);
     if(!due)return;
     this.ticking=true;
     try{

@@ -1,6 +1,7 @@
 import route from './assets/path.json' with {type:'json'};
 import specialSpaces from './assets/special-spaces.json' with {type:'json'};
 import {WeatherEngine} from './weather.js';
+import {GameAudio} from './sound.js';
 
 const $ = selector => document.querySelector(selector);
 const avatar = name => 'assets/avatars/'+name+'.svg';
@@ -27,6 +28,16 @@ const diceFaces=['⚀','⚁','⚂','⚃','⚄','⚅'];
 let players=[],turn=0,pending=null,phase='setup',completedTurns=0;
 let toastTimer=null;
 const climate=new WeatherEngine($('#weather-canvas'),$('#weather-fallback'));
+const sound=new GameAudio();
+sound.subscribe(settings=>{
+ $('#audio-toggle').textContent=settings.enabled?'🔊':'🔇';
+ $('#audio-toggle').setAttribute('aria-label',settings.enabled?'Desativar som':'Ativar som');
+ $('#sound-enabled').checked=settings.enabled;
+ for(const name of ['master','music','effects','ambience']){
+  $('#sound-'+name).value=Math.round(settings[name]*100);
+  $('#sound-'+name+'-value').textContent=Math.round(settings[name]*100)+'%';
+ }
+});
 
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
@@ -171,6 +182,7 @@ function setWeather(){
   const mode=climates[Math.floor(completedTurns/3)%climates.length];
   $('#weather-indicator').textContent=mode.label;
   climate.setMode(mode.name);
+  sound.setWeather(mode.name);
 }
 function openTurnPopup(){
   if(phase==='finished'||!players.length)return;
@@ -193,9 +205,11 @@ function openTurnPopup(){
   $('#roll').hidden=false;
   $('#roll').disabled=false;
   if(!$('#turn-dialog').open)$('#turn-dialog').showModal();
+  sound.play('turn');
 }
 function openSetup(){
   if(phase==='moving'||phase==='rolling')return;
+  sound.stop();
   pending=null;
   phase='setup';
   if($('#turn-dialog').open)$('#turn-dialog').close();
@@ -207,6 +221,7 @@ function startGame(){
   // Closing setup first keeps fullscreen gesture valid.
   $('#setup').close();
   configureFullscreen();
+  void sound.unlock().then(()=>sound.play('start'));
   players=[...$('#roster').children].map((box,index)=>({
     name:box.querySelector('input').value.trim()||'Jogador '+(index+1),
     avatar:box.querySelector('.avatar-choices button.selected')?.title||defaults[index],
@@ -227,6 +242,7 @@ async function moveTo(player,destination){
   const target=clamp(destination),direction=Math.sign(target-player.pos);
   while(player.pos!==target){
     player.pos+=direction;
+    sound.play('step');
     renderTokens();
     await sleep(285);
   }
@@ -239,17 +255,21 @@ async function triggerSpecial(){
   marker?.classList.add('activated');
   let destination=position,message='';
   if(type==='trap'){
+    sound.play('trap');
     destination=clamp(position-3);
     message='🪤 '+player.name+' caiu na armadilha! Volta 3 casas.';
   }else if(type==='quicksand'){
+    sound.play('quicksand');
     player.skipTurns+=1;
     message='🕳️ '+player.name+' ficou na areia movediça e perderá a próxima vez!';
   }else if(type==='portal'){
+    sound.play('portal');
     const forward=Math.random()<.5;
     destination=clamp(position+(forward?5:-5));
     message='🌀 Portal! '+player.name+(forward?' avança 5 casas.':' volta 5 casas.');
   }else if(type==='chest'){
     const lucky=Math.random()<.65;
+    sound.play(lucky?'chest-good':'chest-bad');
     destination=clamp(position+(lucky?3:-2));
     message='🎁 '+player.name+(lucky?' ganhou 3 casas no baú!':' perdeu 2 casas no baú!');
   }
@@ -262,6 +282,7 @@ async function triggerSpecial(){
 }
 function celebrate(){
   phase='finished';
+  sound.play('victory');
   pending=null;
   clearToast();
   render();
@@ -279,6 +300,7 @@ async function goToNextPlayer(){
     render();
     if(!current.skipTurns)break;
     current.skipTurns-=1;
+    sound.play('skip');
     showToast('🕳️ '+current.name+' perdeu a vez por causa da areia movediça!',0);
     renderPlayers();
     await sleep(1250);
@@ -296,6 +318,7 @@ async function submitAnswer(value){
   $('#turn-dialog').close();
   const player=players[turn];
   if(value===answer){
+    sound.play('correct');
     showToast('✅ '+player.name+' acertou! Avance '+die+' casas.',0);
     await sleep(360);
     await moveTo(player,player.pos+die);
@@ -303,6 +326,7 @@ async function submitAnswer(value){
     await triggerSpecial();
     if(player.pos===MAX){celebrate();return}
   }else{
+    sound.play('wrong');
     showToast('❌ Resposta correta: '+answer+'. '+player.name+' permanece na casa.',0);
     await sleep(1200);
   }
@@ -314,6 +338,8 @@ async function submitAnswer(value){
 async function rollDice(){
   if(phase!=='ready')return;
   phase='rolling';
+  void sound.unlock();
+  sound.play('dice');
   const die=rand(1,6),a=rand(2,9),b=rand(2,9),answer=a*b;
   pending={die,answer};
   $('#roll').disabled=true;
@@ -351,6 +377,12 @@ $('#roll').addEventListener('click',rollDice);
 $('#reconfigure').addEventListener('click',openSetup);
 $('#restart').addEventListener('click',openSetup);
 $('#play-again').addEventListener('click',openSetup);
+$('#audio-toggle').addEventListener('click',()=>{const enabled=!sound.settings.enabled;sound.set('enabled',enabled);if(enabled)void sound.unlock()});
+$('#audio-settings').addEventListener('click',()=>$('#sound-dialog').showModal());
+$('#sound-close').addEventListener('click',()=>$('#sound-dialog').close());
+$('#sound-enabled').addEventListener('change',event=>{sound.set('enabled',event.target.checked);if(event.target.checked)void sound.unlock()});
+for(const name of ['master','music','effects','ambience'])$('#sound-'+name).addEventListener('input',event=>sound.set(name,Number(event.target.value)/100));
+$('#sound-test').addEventListener('click',()=>{void sound.unlock().then(()=>sound.play('correct'))});
 for(const id of ['setup','turn-dialog','victory-dialog']){
   // Prevent Escape/back from silently skipping the active turn or victory result.
   $('#'+id).addEventListener('cancel',event=>event.preventDefault());

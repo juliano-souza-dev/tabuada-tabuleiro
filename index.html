@@ -23,6 +23,8 @@
   <div class="hud">
     <div id="players" class="players" aria-label="Posições dos jogadores"></div>
     <div class="hud-right">
+<button id="audio-toggle" type="button" aria-label="Desativar som" title="Ativar/desativar som">🔊</button>
+<button id="audio-settings" type="button" aria-label="Configurações de áudio" title="Volume e mixagem">🎚️</button>
       <div id="weather-indicator" class="weather-indicator" aria-live="polite">☀️ Ensolarado</div>
       <button id="restart" type="button" aria-label="Configurar nova partida" title="Configurar nova partida">⚙️</button>
     </div>
@@ -34,6 +36,18 @@
     <small>O mapa foi preparado para o modo paisagem.</small>
   </div>
 
+  <dialog id="sound-dialog" class="game-dialog sound-dialog" aria-labelledby="sound-heading">
+<h2 id="sound-heading">🎧 Som do jogo</h2>
+<p>Ajuste música, efeitos e ambiente.</p>
+<label class="sound-switch"><input id="sound-enabled" type="checkbox" checked> Som ativado</label>
+<div class="sound-sliders">
+<label for="sound-master">🔊 Volume geral <output id="sound-master-value">75%</output></label><input id="sound-master" type="range" min="0" max="100" value="75">
+<label for="sound-music">🎵 Música <output id="sound-music-value">35%</output></label><input id="sound-music" type="range" min="0" max="100" value="35">
+<label for="sound-effects">✨ Efeitos <output id="sound-effects-value">85%</output></label><input id="sound-effects" type="range" min="0" max="100" value="85">
+<label for="sound-ambience">🌧️ Ambiente <output id="sound-ambience-value">45%</output></label><input id="sound-ambience" type="range" min="0" max="100" value="45">
+</div><button id="sound-test" class="quiet-button" type="button">▶ Testar som</button>
+<button id="sound-close" class="primary-button" type="button">Concluir</button>
+</dialog>
   <dialog id="setup" class="game-dialog setup-dialog" aria-labelledby="setup-heading">
     <h2 id="setup-heading">🎲 Quem vai jogar?</h2>
     <p>Escolha de 2 a 5 jogadores e seus avatares.</p>

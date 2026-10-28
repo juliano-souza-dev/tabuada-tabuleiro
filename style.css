@@ -124,3 +124,27 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .sound-sliders label{font-size:11px;margin:0}.sound-sliders input[type="range"]{min-height:19px}
 .sound-dialog .primary-button{padding:7px}#audio-toggle,#audio-settings{width:32px;height:32px;font-size:16px}
 }
+
+/* Cronômetro de 60 segundos e correção pedagógica */
+.question-timer{display:grid;gap:4px;text-align:left;padding:6px 9px;margin:5px 0 9px;background:#03132580;border:1px solid #ffffff30;border-radius:11px}
+.question-timer[hidden],.answer-feedback[hidden]{display:none}
+.timer-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:clamp(11px,1.35vw,14px);font-weight:750}
+.timer-top strong{font-size:clamp(15px,2vw,19px);font-variant-numeric:tabular-nums;color:#fbe2a5}
+.timer-track{height:7px;border-radius:99px;background:#ffffff30;overflow:hidden}
+.timer-bar{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#5de8bb,#ffe27c);transition:width .12s linear}
+.question-timer.urgent{border-color:#ff8f8f;background:#5e2036a6}
+.question-timer.urgent .timer-top strong{color:#ffb6b6}
+.question-timer.urgent .timer-bar{background:linear-gradient(90deg,#ff7676,#ffbd60)}
+.options button[disabled]{opacity:1;cursor:default}
+.options button.is-correct,.options button.is-correct[disabled]{background:linear-gradient(#abf7d3,#47d998);border-color:#e0ffe9;color:#063b25;box-shadow:0 0 0 2px #80ffb882,0 0 17px #4be69b52}
+.options button.is-wrong,.options button.is-wrong[disabled]{background:linear-gradient(#ffc3c3,#ff808e);border-color:#ffe1e1;color:#671425;animation:answer-shake .32s ease-out}
+.answer-feedback{padding:10px 12px;margin:10px 0 0!important;border:1px solid;border-radius:12px;font-weight:800;font-size:clamp(12px,1.55vw,16px)!important;line-height:1.35!important}
+.answer-feedback.feedback-wrong{background:#811e3585;border-color:#ff9ca9;color:#fff0f2}
+.answer-feedback.feedback-correct{background:#0c6b6b6b;border-color:#86f4c0;color:#e6fff2}
+@keyframes answer-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+@media(max-height:470px) and (orientation:landscape){
+.question-timer{padding:3px 7px;margin:2px 0 4px;gap:2px}
+.timer-top{font-size:10px}.timer-top strong{font-size:13px}.timer-track{height:4px}
+.answer-feedback{padding:5px 9px;margin:4px 0 0!important;font-size:11px!important}
+}
+@media(prefers-reduced-motion:reduce){.options button.is-wrong{animation:none}.timer-bar{transition:none}}

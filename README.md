@@ -4,7 +4,7 @@ Jogo mobile horizontal para 2 a 5 jogadores no mesmo dispositivo, com 10 avatare
 
 - **Avatares**: arquivos SVG transparentes em `assets/avatars/`, pequenos no tabuleiro (1,8% da largura do mapa).
 - **Trilha**: posições percentuais das 40 casas no arquivo `assets/path.json`.
-- **Mapa**: arquivo `assets/mapa-oficial.png` (a ilustração aprovada precisa ser adicionada ao repositório; o pacote completo enviado na conversa já a inclui).
+- **Mapa**: arquivo `assets/mapa-oficial.webp` (arte aprovada integrada ao repositório, convertida para WebP para carregar melhor no celular).
 - **Interface**: HTML/CSS/JS responsivo, sem elementos de controle incorporados ao mapa.
 
 Para executar use servidor HTTP local, por exemplo `python -m http.server 8000`.

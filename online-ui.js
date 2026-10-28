@@ -52,6 +52,7 @@ export class OnlineUI{
       catch(error){renderText($('#online-lobby-hint'),link)}
     });
     $('#online-leave').addEventListener('click',()=>this.leave());
+    $('#online-exit-turn').addEventListener('click',()=>this.leave());
     $('#online-finish').addEventListener('click',()=>this.leave());
     $('#online-rematch').addEventListener('click',async()=>{
       this.callbacks.onGesture();

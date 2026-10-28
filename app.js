@@ -348,27 +348,53 @@ async function goToNextPlayer(){
 }
 async function submitAnswer(value){
   if(phase!=='question'||!pending)return;
+  // A tap received after the deadline is treated as time expired.
+  if(answerDeadline&&Date.now()>=answerDeadline)value=null;
   const {die,answer}=pending;
+  stopQuestionTimer();
   pending=null;
+  phase='feedback'; // Prevent duplicate responses and timeout races.
+  const timedOut=value===null;
+  const correct=value===answer;
+  const player=players[turn];
+  const feedback=$('#answer-feedback');
+  $('#options').querySelectorAll('button').forEach(button=>{
+    button.disabled=true;
+    if(Number(button.textContent)===answer)button.classList.add('is-correct');
+    else if(!timedOut&&Number(button.textContent)===value)button.classList.add('is-wrong');
+  });
+  feedback.className='answer-feedback '+(correct?'feedback-correct':'feedback-wrong');
+  feedback.textContent=correct
+    ?'✅ Resposta correta! Você avança '+die+' casas.'
+    :timedOut
+      ?'⏰ Tempo esgotado! A resposta correta é '+answer+'. Você perdeu a vez.'
+      :'❌ Resposta incorreta. A resposta correta é '+answer+'. Você perdeu a vez.';
+  feedback.hidden=false;
+  $('#turn-help').textContent=timedOut?'O tempo acabou!':correct?'Muito bem!':'Confira a resposta destacada em verde.';
+  if(timedOut){
+    $('#timer-count').textContent='0';
+    $('#timer-bar').style.width='0%';
+    $('#question-timer').classList.add('urgent');
+  }
+  sound.play(correct?'correct':'wrong');
+  await sleep(correct?700:2600);
+  if(phase!=='feedback')return;
   phase='moving';
   $('#turn-dialog').close();
-  const player=players[turn];
-  if(value===answer){
-    sound.play('correct');
+  if(correct){
     showToast('✅ '+player.name+' acertou! Avance '+die+' casas.',0);
-    await sleep(360);
+    await sleep(300);
     await moveTo(player,player.pos+die);
     if(player.pos===MAX){celebrate();return}
     await triggerSpecial();
     if(player.pos===MAX){celebrate();return}
   }else{
-    sound.play('wrong');
-    showToast('❌ Resposta correta: '+answer+'. '+player.name+' permanece na casa.',0);
-    await sleep(1200);
+    showToast((timedOut?'⏰ Tempo esgotado! ':'❌ Resposta incorreta. ')+'Resposta correta: '+answer+'. '+player.name+' perdeu a vez.',0);
+    await sleep(600);
   }
   completedTurns++;
   setWeather();
-  await sleep(800);
+  await sleep(650);
   await goToNextPlayer();
 }
 async function rollDice(){

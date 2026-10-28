@@ -22,7 +22,7 @@ export class FirebaseRooms{
     this.onRoom=onRoom;this.onError=onError;
     this.sdk=null;this.auth=null;this.db=null;this.uid=null;this.roomCode=null;this.room=null;
     this.offset=0;this.unsub=[];this.hostTickTimer=null;this.ticking=false;
-    this.offlineSince=new Map();this.handoffTarget=null;this.handoffRequest=0;
+    this.offlineSince=new Map();this.handoffTarget=null;this.handoffRequest=0;this.leaving=false;
   }
   now(){return Date.now()+this.offset}
   get amHost(){return Boolean(this.room&&this.room.hostId===this.uid)}
@@ -101,7 +101,7 @@ export class FirebaseRooms{
     if(this.room)this.onRoom(this.room,code);
     this.unsub.push(onValue(roomRef,snapshot=>{
       this.room=snapshot.val();
-      this.onRoom(this.room,code);
+      if(!this.leaving)this.onRoom(this.room,code);
       void this.updateHandoff().catch(error=>this.onError(friendlyError(error)));
     },error=>this.onError(friendlyError(error))));
     // Only the host processes player requests. Others submit commands to Firebase.
@@ -115,7 +115,7 @@ export class FirebaseRooms{
     this.hostTickTimer=setInterval(()=>{if(this.amHost)void this.tick()},500);
   }
   async updateHandoff(){
-    if(!this.roomCode||!this.db)return;
+    if(!this.roomCode||!this.db||this.leaving)return;
     const remaining=Object.values(this.room?.seats||{}).find(seat=>seat?.uid&&seat.uid!==this.uid)?.uid||null;
     const target=this.amHost?remaining:null;
     if(target===this.handoffTarget)return;
@@ -141,7 +141,7 @@ export class FirebaseRooms{
         if(!current?.order?.includes(absent))return;
         return removePlayer(current,absent,this.now())||undefined;
       },{applyLocally:false});
-      return;
+      return true;
     }
     const now=this.now(),GRACE_MS=20000;
     for(const uid of members){
@@ -153,7 +153,7 @@ export class FirebaseRooms{
       if(now-this.offlineSince.get(uid)<GRACE_MS)continue;
       this.offlineSince.delete(uid);
       await this.removeParticipant(uid,true);
-      return;
+      return true;
     }
     for(const uid of [...this.offlineSince.keys()])if(!members.has(uid))this.offlineSince.delete(uid);
   }
@@ -209,14 +209,16 @@ export class FirebaseRooms{
     }catch(error){this.onError(friendlyError(error))}
   }
   async tick(){
-    if(this.ticking||!this.amHost||!this.room?.state)return;
-    const current=this.room.state;
-    const due=current.phase==='ready'||
-      (current.phase==='question'&&current.question&&this.now()>=current.question.deadline)||
-      ((current.phase==='feedback'||current.phase==='power')&&current.feedback&&this.now()>=current.feedback.until);
-    if(!due)return;
+    if(this.ticking||!this.amHost||!this.room?.state||this.leaving)return;
     this.ticking=true;
     try{
+      if(await this.reconcile())return;
+      if(!this.amHost||!this.room?.state)return;
+      const current=this.room.state;
+      const due=current.phase==='ready'||
+        (current.phase==='question'&&current.question&&this.now()>=current.question.deadline)||
+        ((current.phase==='feedback'||current.phase==='power')&&current.feedback&&this.now()>=current.feedback.until);
+      if(!due)return;
       await this.sdk.runTransaction(this.sdk.ref(this.db,this.roomPath('state')),state=>{
         return advanceIfDue(state,this.now())||undefined;
       },{applyLocally:false});

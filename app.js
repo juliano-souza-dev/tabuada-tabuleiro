@@ -168,6 +168,11 @@ function renderTokens(){
     const position=route[player.pos];
     token.style.left=(position.x+(col-(columns-1)/2)*.95)+'%';
     token.style.top=(position.y+(row-(rows-1)/2)*2.4)+'%';
+    const tokenImage=token.querySelector('img');
+    if(tokenImage&&tokenImage.getAttribute('src')!==avatar(player.avatar)){
+      tokenImage.src=avatar(player.avatar);
+    }
+    if(tokenImage)tokenImage.alt=player.name;
     token.classList.toggle('current',index===turn);
     token.title=player.name+' · casa '+(player.pos+1);
   });

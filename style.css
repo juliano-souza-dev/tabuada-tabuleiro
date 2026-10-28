@@ -148,3 +148,44 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .answer-feedback{padding:5px 9px;margin:4px 0 0!important;font-size:11px!important}
 }
 @media(prefers-reduced-motion:reduce){.options button.is-wrong{animation:none}.timer-bar{transition:none}}
+
+/* Superpoder: energia individual, lançamento e impacto no tabuleiro */
+.player-info{min-width:0;display:flex;flex-direction:column;gap:3px;flex:1}
+.player-top{display:flex;align-items:center;gap:4px;justify-content:space-between}
+.player-top strong{overflow:hidden;text-overflow:ellipsis}
+.player-top small{flex:none}
+.power-meter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;width:100%;max-width:180px}
+.power-segment{height:7px;border-radius:4px;background:#52647988;border:1px solid #ffffff2d;transition:background .25s ease,box-shadow .25s ease}
+.power-segment.charged{background:linear-gradient(135deg,#fff9a1,#ffbc32);border-color:#fff2ac;box-shadow:0 0 7px #ffdc6f7d}
+.player .power-segment{height:4px}
+.player.power-ready{border-color:#ffdf7b;box-shadow:0 0 12px #ffc53355}
+.player.power-ready .power-segment{animation:power-glimmer 1.1s ease-in-out infinite alternate}
+.turn-power{display:grid;gap:5px;padding:9px 12px 3px;max-width:300px;margin:0 auto;width:100%}
+.power-caption{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:#ffe9b4;font-weight:800}
+.power-caption strong{font-variant-numeric:tabular-nums}
+.turn-power .power-segment{height:10px}
+.power-launch{display:block;width:100%;margin:6px 0 4px;padding:10px 12px;border:2px solid #fff0a9;border-radius:13px;color:#392100;font-weight:900;font-size:clamp(13px,1.7vw,17px);background:linear-gradient(135deg,#fff4ae,#ffb62b);box-shadow:0 0 17px #ffd46c77;animation:power-glimmer 1.15s ease-in-out infinite alternate}
+.power-launch[hidden]{display:none}
+.power-launch:active{transform:scale(.98)}
+#power-effects{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:visible}
+.power-projectile{position:absolute;left:var(--origin-x);top:var(--origin-y);width:clamp(20px,3.5vw,48px);height:clamp(20px,3.5vw,48px);transform:translate(-50%,-50%);display:grid;place-items:center;font-size:clamp(20px,3.5vw,42px);filter:drop-shadow(0 0 12px #ffeb78) drop-shadow(0 0 19px #ffa100);animation:power-flight .85s cubic-bezier(.12,.55,.2,1) forwards}
+.power-projectile::before{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(circle,#fffbc190,#ffbf2670 30%,transparent 72%);z-index:-1;animation:power-pulse .25s ease-in-out infinite alternate}
+.power-impact{position:absolute;left:var(--hit-x);top:var(--hit-y);width:85px;height:85px;transform:translate(-50%,-50%);border:4px solid #fff39a;border-radius:50%;box-shadow:0 0 0 10px #ffdc6760,0 0 35px 12px #ffb843b0;animation:power-impact .62s ease-out forwards}
+@keyframes power-flight{0%{transform:translate(-50%,-50%) scale(.5);opacity:.4}18%{opacity:1}75%{opacity:1}100%{transform:translate(calc(-50% + var(--travel-x)),calc(-50% + var(--travel-y))) scale(1.4);opacity:0}}
+@keyframes power-impact{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
+@keyframes power-pulse{to{transform:scale(1.4);opacity:.5}}
+@keyframes power-glimmer{to{filter:brightness(1.17);box-shadow:0 0 20px #ffd54eaa}}
+@media(max-height:470px) and (orientation:landscape){
+ .turn-power{padding:3px 7px 0;gap:3px;max-width:230px}
+ .turn-power .power-segment{height:6px}
+ .power-caption{font-size:10px}
+ .power-launch{padding:5px 9px;margin:2px 0;font-size:12px}
+ .player .power-segment{height:3px}
+}
+@media(prefers-reduced-motion:reduce){
+ .player.power-ready .power-segment,.power-launch{animation:none}
+ .power-projectile{animation-duration:.3s}
+ .power-impact{animation-duration:.25s}
+ .power-projectile::before{animation:none}
+ .power-segment{transition:none}
+}

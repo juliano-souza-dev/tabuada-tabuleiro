@@ -1,4 +1,4 @@
-import {newGame,applyCommand,advanceIfDue} from './online-logic.js';
+import {newGame,applyCommand,advanceIfDue,removePlayer} from './online-logic.js';
 import {firebaseConfig} from './firebase-config.js';
 
 // Firebase only starts loading after someone selects multiplayer.
@@ -22,6 +22,7 @@ export class FirebaseRooms{
     this.onRoom=onRoom;this.onError=onError;
     this.sdk=null;this.auth=null;this.db=null;this.uid=null;this.roomCode=null;this.room=null;
     this.offset=0;this.unsub=[];this.hostTickTimer=null;this.ticking=false;
+    this.offlineSince=new Map();this.handoffTarget=null;this.handoffRequest=0;
   }
   now(){return Date.now()+this.offset}
   get amHost(){return Boolean(this.room&&this.room.hostId===this.uid)}
@@ -101,6 +102,7 @@ export class FirebaseRooms{
     this.unsub.push(onValue(roomRef,snapshot=>{
       this.room=snapshot.val();
       this.onRoom(this.room,code);
+      void this.updateHandoff().catch(error=>this.onError(friendlyError(error)));
     },error=>this.onError(friendlyError(error))));
     // Only the host processes player requests. Others submit commands to Firebase.
     this.unsub.push(onChildAdded(ref(this.db,this.roomPath('commands')),snapshot=>{
@@ -109,7 +111,67 @@ export class FirebaseRooms{
     const presenceRef=ref(this.db,this.roomPath('presence/'+this.uid));
     await onDisconnect(presenceRef).remove();
     await set(presenceRef,true);
+    void this.updateHandoff().catch(error=>this.onError(friendlyError(error)));
     this.hostTickTimer=setInterval(()=>{if(this.amHost)void this.tick()},500);
+  }
+  async updateHandoff(){
+    if(!this.roomCode||!this.db)return;
+    const remaining=Object.values(this.room?.seats||{}).find(seat=>seat?.uid&&seat.uid!==this.uid)?.uid||null;
+    const target=this.amHost?remaining:null;
+    if(target===this.handoffTarget)return;
+    this.handoffTarget=target;
+    const serial=++this.handoffRequest;
+    const ref=this.sdk.ref(this.db,this.roomPath('hostId'));
+    const disconnect=this.sdk.onDisconnect(ref);
+    // On an unplanned host disconnect, one remaining device becomes host.
+    // The new host later removes the abandoned participant after a grace period.
+    if(target)await disconnect.set(target);
+    else await disconnect.cancel();
+    if(serial!==this.handoffRequest)return;
+  }
+  async reconcile(){
+    if(!this.amHost||!this.roomCode||!this.room?.state)return;
+    const seats=Object.values(this.room.seats||{});
+    const members=new Set(seats.map(seat=>seat?.uid).filter(Boolean));
+    const state=this.room.state;
+    // Explicit exits delete their seat immediately; clean their board state.
+    const absent=state.order?.find(uid=>!members.has(uid));
+    if(absent){
+      await this.sdk.runTransaction(this.sdk.ref(this.db,this.roomPath('state')),current=>{
+        if(!current?.order?.includes(absent))return;
+        return removePlayer(current,absent,this.now())||undefined;
+      },{applyLocally:false});
+      return;
+    }
+    const now=this.now(),GRACE_MS=20000;
+    for(const uid of members){
+      if(uid===this.uid||this.room.presence?.[uid]){
+        this.offlineSince.delete(uid);
+        continue;
+      }
+      if(!this.offlineSince.has(uid))this.offlineSince.set(uid,now);
+      if(now-this.offlineSince.get(uid)<GRACE_MS)continue;
+      this.offlineSince.delete(uid);
+      await this.removeParticipant(uid,true);
+      return;
+    }
+    for(const uid of [...this.offlineSince.keys()])if(!members.has(uid))this.offlineSince.delete(uid);
+  }
+  async removeParticipant(uid,offline=false){
+    if(!this.amHost||!this.roomCode||uid===this.uid)return false;
+    const result=await this.sdk.runTransaction(this.sdk.ref(this.db,this.roomPath()),room=>{
+      if(!room||room.hostId!==this.uid||!room.seats)return;
+      const seatId=Object.keys(room.seats).find(key=>room.seats[key]?.uid===uid);
+      if(seatId===undefined)return;
+      if(offline&&room.presence?.[uid])return;
+      const seats={...room.seats};
+      delete seats[seatId];
+      const presence={...room.presence};
+      delete presence[uid];
+      return {...room,seats,presence,
+        state:removePlayer(room.state,uid,this.now())||room.state};
+    },{applyLocally:false});
+    return result.committed;
   }
   async start(){
     if(!this.amHost)throw Error('Somente o criador da sala pode iniciar.');

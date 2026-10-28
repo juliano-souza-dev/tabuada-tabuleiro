@@ -72,3 +72,6 @@ Sem os dados reais do projeto, o jogo informa que as salas online ainda não est
 - Quedas involuntárias têm **20 segundos de tolerância** antes que o novo anfitrião ou o anfitrião ainda conectado retire a pessoa da partida. Uma reconexão antes desse prazo preserva a participação.
 - **Se restar somente um jogador**, a partida termina de modo amigável com uma mensagem de encerramento e opção de voltar ao início. Ninguém fica preso em uma sala com um único participante.
 - Todos os jogadores ainda presentes recebem um aviso de saída; o resultado da última partida permanece visível até que o jogador o feche.
+
+**Importante para a publicação:** após esta atualização, as regras revisadas em `database.rules.json` também precisam ser publicadas no Realtime Database. Elas incluem a nova fase de lançamento de poder, a saída voluntária de um participante e a transferência segura de anfitrião. O workflow atual do GitHub Pages **não** publica regras do Firebase automaticamente. Use a aba de regras no console ou `firebase deploy --only database` no projeto correspondente. Sem essa atualização do banco, algumas saídas de convidados podem ser resolvidas pelo anfitrião, mas a transferência de anfitrião pode ser recusada pelo servidor.
+

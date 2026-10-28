@@ -235,26 +235,49 @@ export class FirebaseRooms{
     await this.sdk.remove(this.sdk.ref(this.db,this.roomPath('seats/'+index)));
   }
   async leave(){
+    if(this.leaving)return;
+    this.leaving=true;
     const room=this.room,code=this.roomCode,uid=this.uid;
+    try{
+      if(code&&this.db&&uid){
+        const {ref,remove,set,onDisconnect,runTransaction}=this.sdk;
+        const base='rooms/'+code;
+        const presence=ref(this.db,base+'/presence/'+uid);
+        const hostRef=ref(this.db,base+'/hostId');
+        // Cancel disconnect hooks before transferring ownership or deleting the seat.
+        await onDisconnect(presence).cancel();
+        await onDisconnect(hostRef).cancel();
+        if(room?.hostId===uid){
+          const tx=await runTransaction(ref(this.db,base),current=>{
+            if(!current||current.hostId!==uid)return;
+            if(current.state?.phase==='lobby')return null;
+            const seats={...current.seats};
+            const slot=Object.keys(seats).find(index=>seats[index]?.uid===uid);
+            if(slot!==undefined)delete seats[slot];
+            const successors=Object.values(seats).filter(entry=>entry?.uid);
+            if(!successors.length)return null;
+            const presenceCopy={...current.presence};
+            delete presenceCopy[uid];
+            return {...current,hostId:successors[0].uid,seats,presence:presenceCopy,
+              state:removePlayer(current.state,uid,this.now())||current.state};
+          },{applyLocally:false});
+          if(!tx.committed)throw Error('Não foi possível transferir a sala. Tente novamente.');
+        }else{
+          // A guest can only delete their own seat. The host updates the match.
+          await set(presence,false);
+          const slot=Object.keys(room?.seats||{}).find(index=>room.seats[index]?.uid===uid);
+          if(slot!==undefined)await remove(ref(this.db,base+'/seats/'+slot));
+        }
+      }
+    }catch(error){
+      this.leaving=false;
+      this.onError(friendlyError(error));
+      throw error;
+    }
     for(const unsubscribe of this.unsub.splice(1)){try{unsubscribe()}catch(e){}}
     if(this.hostTickTimer){clearInterval(this.hostTickTimer);this.hostTickTimer=null}
-    if(code&&this.db&&uid){
-      const {ref,remove,set,onDisconnect}=this.sdk;
-      const base='rooms/'+code;
-      try{
-        const presence=ref(this.db,base+'/presence/'+uid);
-        await onDisconnect(presence).cancel();
-        if(room?.state?.phase==='lobby'&&room.hostId===uid){
-          await remove(ref(this.db,base));
-        }else{
-          await set(presence,false);
-          if(room?.state?.phase==='lobby'){
-            const seat=Object.entries(room.seats||{}).find(([,value])=>value?.uid===uid);
-            if(seat)await remove(ref(this.db,base+'/seats/'+seat[0]));
-          }
-        }
-      }catch(error){console.warn('Não foi possível atualizar a presença ao sair.',error)}
-    }
-    this.roomCode=null;this.room=null;
+    this.roomCode=null;this.room=null;this.offlineSince.clear();
+    this.handoffTarget=null;this.handoffRequest++;
+    this.leaving=false;
   }
 }

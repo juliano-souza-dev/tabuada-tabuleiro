@@ -37,6 +37,89 @@
     <small>O mapa foi preparado para o modo paisagem.</small>
   </div>
 
+
+  <div id="online-banner" class="online-banner" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="mode-dialog" class="game-dialog mode-dialog" aria-labelledby="mode-title">
+    <h2 id="mode-title">🎲 Corrida da Tabuada</h2>
+    <p>Como vamos jogar hoje?</p>
+    <button id="mode-local" class="primary-button" type="button">📱 No mesmo celular</button>
+    <button id="mode-online" class="primary-button online-main-button" type="button">🌐 Jogar online</button>
+    <p class="mode-note">No modo online, cada participante joga no próprio aparelho.</p>
+  </dialog>
+
+  <dialog id="online-entry" class="game-dialog online-entry" aria-labelledby="online-entry-title">
+    <h2 id="online-entry-title">🌐 Jogar online</h2>
+    <label for="online-name">Seu nome</label>
+    <input id="online-name" maxlength="18" value="Jogador" autocomplete="nickname">
+    <label for="online-avatar">Seu personagem</label>
+    <select id="online-avatar">
+      <option value="masculino-01">Personagem 1</option>
+      <option value="feminino-01">Personagem 2</option>
+      <option value="masculino-02">Personagem 3</option>
+      <option value="feminino-02">Personagem 4</option>
+      <option value="masculino-03">Personagem 5</option>
+      <option value="feminino-03">Personagem 6</option>
+      <option value="masculino-04">Personagem 7</option>
+      <option value="feminino-04">Personagem 8</option>
+      <option value="masculino-05">Personagem 9</option>
+      <option value="feminino-05">Personagem 10</option>
+    </select>
+    <div class="online-entry-actions">
+      <button id="online-create" class="primary-button" type="button">✨ Criar uma sala</button>
+      <label for="online-code">Ou entre em uma sala existente</label>
+      <div class="join-line">
+        <input id="online-code" type="text" maxlength="7" placeholder="CÓDIGO" autocapitalize="characters" spellcheck="false">
+        <button id="online-join" type="button">Entrar</button>
+      </div>
+    </div>
+    <p id="online-error" class="online-error" role="alert" hidden></p>
+    <button id="online-back" type="button" class="quiet-button">Voltar</button>
+  </dialog>
+
+  <dialog id="online-lobby" class="game-dialog online-lobby" aria-labelledby="online-lobby-title">
+    <h2 id="online-lobby-title">🏰 Sala de aventura</h2>
+    <p>Convide seus amigos para a mesma corrida!</p>
+    <div class="room-code"><span>Código da sala</span><strong id="online-room-code">-------</strong></div>
+    <button id="online-copy" type="button" class="quiet-button">📋 Copiar convite</button>
+    <div id="online-roster" class="online-roster" aria-label="Jogadores conectados"></div>
+    <p id="online-lobby-hint">Aguardando jogadores...</p>
+    <button id="online-start" class="primary-button" type="button" hidden>🎲 Começar partida</button>
+    <button id="online-leave" class="quiet-button" type="button">Sair da sala</button>
+  </dialog>
+
+  <dialog id="online-turn" class="game-dialog turn-dialog online-turn" aria-labelledby="online-turn-name">
+    <div class="turn-player">
+      <img id="online-turn-avatar" alt="" width="72" height="84">
+      <div><span class="turn-eyebrow">🌐 SUA VEZ!</span><h2 id="online-turn-name">Jogador</h2><p id="online-turn-progress">Casa 1 de 40</p></div>
+    </div>
+    <div class="turn-power">
+      <span class="power-caption"><span>⚡ Superpoder</span><strong id="online-power-count">0/3</strong></span>
+      <span id="online-power-meter" class="power-meter" aria-hidden="true"></span>
+    </div>
+    <button id="online-power" class="power-launch" type="button" hidden>⚡ Lançar superpoder!</button>
+    <div id="online-die" class="die">🎲</div>
+    <p id="online-help">Lance o dado e responda!</p>
+    <h3 id="online-question" class="question" hidden></h3>
+    <div id="online-timer" class="question-timer" role="timer" hidden>
+      <div class="timer-top"><span>⏱️ Tempo para responder</span><strong><span id="online-countdown">60</span>s</strong></div>
+      <div class="timer-track" aria-hidden="true"><div id="online-timer-bar" class="timer-bar"></div></div>
+    </div>
+    <div id="online-options" class="options" hidden></div>
+    <p id="online-feedback" class="answer-feedback" role="status" aria-live="polite" hidden></p>
+    <button id="online-roll" class="primary-button roll-button" type="button">🎲 Lançar dado</button>
+  </dialog>
+
+  <dialog id="online-victory" class="game-dialog victory-dialog" aria-labelledby="online-victory-title">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <h2 id="online-victory-title">Temos um vencedor!</h2>
+    <img id="online-winner-avatar" class="winner-avatar" alt="" width="90" height="110">
+    <p id="online-winner-message"></p>
+    <button id="online-rematch" class="primary-button" type="button" hidden>🎲 Jogar novamente</button>
+    <p id="online-rematch-wait" hidden>Aguarde o anfitrião iniciar outra partida.</p>
+    <button id="online-finish" type="button" class="quiet-button">Voltar ao início</button>
+  </dialog>
+
   <dialog id="sound-dialog" class="game-dialog sound-dialog" aria-labelledby="sound-heading">
 <h2 id="sound-heading">🎧 Som do jogo</h2>
 <p>Ajuste música, efeitos e ambiente.</p>

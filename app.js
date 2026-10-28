@@ -27,6 +27,32 @@ const clamp=value=>Math.max(0,Math.min(MAX,value));
 const diceFaces=['⚀','⚁','⚂','⚃','⚄','⚅'];
 let players=[],turn=0,pending=null,phase='setup',completedTurns=0;
 let toastTimer=null;
+
+const QUESTION_SECONDS=60;
+let answerDeadline=0;
+let questionInterval=null;
+function stopQuestionTimer(){
+  if(questionInterval!==null){clearInterval(questionInterval);questionInterval=null}
+  answerDeadline=0;
+}
+function updateQuestionTimer(){
+  if(phase!=='question'||!pending||!answerDeadline)return;
+  // Use real elapsed time even if the browser pauses timers in the background.
+  const seconds=Math.max(0,Math.ceil((answerDeadline-Date.now())/1000));
+  $('#timer-count').textContent=String(seconds);
+  $('#timer-bar').style.width=(seconds/QUESTION_SECONDS*100)+'%';
+  $('#question-timer').classList.toggle('urgent',seconds<=10);
+  $('#question-timer').setAttribute('aria-label',seconds+' segundos para responder');
+  if(seconds===0)void submitAnswer(null);
+}
+function startQuestionTimer(){
+  stopQuestionTimer();
+  answerDeadline=Date.now()+QUESTION_SECONDS*1000;
+  $('#question-timer').hidden=false;
+  phase='question';
+  updateQuestionTimer();
+  questionInterval=setInterval(updateQuestionTimer,100);
+}
 const climate=new WeatherEngine($('#weather-canvas'),$('#weather-fallback'));
 const sound=new GameAudio();
 sound.subscribe(settings=>{
@@ -186,6 +212,7 @@ function setWeather(){
 }
 function openTurnPopup(){
   if(phase==='finished'||!players.length)return;
+  stopQuestionTimer();
   phase='ready';
   pending=null;
   clearToast();
@@ -200,6 +227,12 @@ function openTurnPopup(){
   $('#turn-help').textContent='Lance o dado e acerte a multiplicação para avançar!';
   $('#question').textContent='';
   $('#question').hidden=true;
+  $('#question-timer').hidden=true;
+  $('#question-timer').classList.remove('urgent');
+  $('#timer-count').textContent=String(QUESTION_SECONDS);
+  $('#timer-bar').style.width='100%';
+  $('#answer-feedback').hidden=true;
+  $('#answer-feedback').className='answer-feedback';
   $('#options').replaceChildren();
   $('#options').hidden=true;
   $('#roll').hidden=false;
@@ -208,7 +241,8 @@ function openTurnPopup(){
   sound.play('turn');
 }
 function openSetup(){
-  if(phase==='moving'||phase==='rolling')return;
+  if(phase==='moving'||phase==='rolling'||phase==='feedback')return;
+  stopQuestionTimer();
   sound.stop();
   pending=null;
   phase='setup';
@@ -218,6 +252,7 @@ function openSetup(){
   renderRoster();
 }
 function startGame(){
+  stopQuestionTimer();
   // Closing setup first keeps fullscreen gesture valid.
   $('#setup').close();
   configureFullscreen();
@@ -281,6 +316,7 @@ async function triggerSpecial(){
   marker?.classList.remove('activated');
 }
 function celebrate(){
+  stopQuestionTimer();
   phase='finished';
   sound.play('victory');
   pending=null;
@@ -369,7 +405,7 @@ async function rollDice(){
     button.onclick=()=>submitAnswer(value);
     $('#options').append(button);
   });
-  phase='question';
+  startQuestionTimer();
 }
 $('#count').addEventListener('change',renderRoster);
 $('#start').addEventListener('click',startGame);

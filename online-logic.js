@@ -1,6 +1,6 @@
 import specialSpaces from './assets/special-spaces.json' with {type:'json'};
 // Regras compartilhadas para o modo online; o anfitrião aplica as ações.
-export const ANSWER_SECONDS=60;
+export const ANSWER_SECONDS=30;
 export const POWER_STEPS=3;
 export const LAST_SQUARE=39;
 export const EVENTS=Object.fromEntries(specialSpaces.map(({position,type})=>[position,type]));
@@ -24,9 +24,13 @@ const optionsFor=(answer,random)=>{
   }
   return choices;
 };
+function makeQuestion(now,random){
+  const a=roll(2,9,random),b=roll(2,9,random),die=roll(1,6,random);
+  return {a,b,answer:a*b,die,options:optionsFor(a*b,random),deadline:now+ANSWER_SECONDS*1000};
+}
 const names=['masculino-01','masculino-02','masculino-03','masculino-04','masculino-05','feminino-01','feminino-02','feminino-03','feminino-04','feminino-05'];
 const stamp=(state,data)=>({...state,rev:(state.rev||0)+1,event:{id:(state.rev||0)+1,...data}});
-export function newGame(seats){
+export function newGame(seats,now=Date.now(),random=Math.random){
   const seatsInOrder=Object.entries(seats||{}).sort(([a],[b])=>Number(a)-Number(b)).slice(0,5);
   if(seatsInOrder.length<2)throw Error('São necessários pelo menos dois jogadores.');
   const players={},order=[];
@@ -37,7 +41,9 @@ export function newGame(seats){
     order.push(uid);
   }
   if(order.length<2)throw Error('São necessários dois participantes diferentes.');
-  return {phase:'ready',rev:1,turn:0,rounds:0,order,players,question:null,feedback:null,event:{id:1,kind:'start'},lastCommands:{}};
+  const question=makeQuestion(now,random);
+  return {phase:'question',rev:1,turn:0,rounds:0,order,players,question,feedback:null,event:{id:1,kind:'roll',actor:order[0],die:question.die},lastCommands:{}};
+
 }
 function finishAnswer(state,command,now,random){
   if(state.phase!=='question'||!state.question)return null;
@@ -84,15 +90,11 @@ export function applyCommand(state,command,now,random=Math.random){
   if(!state||!command||!state.order?.includes(command.actor))return null;
   const actor=state.order[state.turn];
   if(command.actor!==actor)return null;
-  if(command.kind==='roll'&&state.phase==='ready'){
-    const a=roll(2,9,random),b=roll(2,9,random),die=roll(1,6,random);
-    const question={a,b,answer:a*b,die,options:optionsFor(a*b,random),deadline:now+ANSWER_SECONDS*1000};
-    return stamp({...state,phase:'question',question,feedback:null},{kind:'roll',actor,die});
-  }
   if((command.kind==='answer'||command.kind==='timeout')&&state.phase==='question'){
     return finishAnswer(state,command,now,random);
   }
-  if(command.kind==='power'&&state.phase==='ready'){
+  // Using the power replaces answering this question and consumes the turn.
+  if(command.kind==='power'&&state.phase==='question'&&state.question&&now<state.question.deadline){
     if(state.players[actor].power<POWER_STEPS)return null;
     const adversaries=state.order.filter(uid=>uid!==actor);
     if(!adversaries.length)return null;
@@ -103,16 +105,23 @@ export function applyCommand(state,command,now,random=Math.random){
     const hit=players[target],from=hit.pos;
     if(effect==='skip')hit.skipTurns++;
     else hit.pos=bounded(hit.pos-(effect==='back2'?2:3));
-    return stamp({...state,players},{kind:'power',actor,target,effect,from,to:hit.pos});
+    return stamp({...state,players,phase:'power',question:null,feedback:{kind:'power',until:now+2700}},
+      {kind:'power',actor,target,effect,origin:players[actor].pos,from,to:hit.pos});
   }
   return null;
 }
 export function advanceIfDue(state,now,random=Math.random){
   if(!state)return null;
+  // Recover rooms started by a previous version which waited for a manual roll.
+  if(state.phase==='ready'){
+    const question=makeQuestion(now,random);
+    return stamp({...state,phase:'question',question,feedback:null},
+      {kind:'roll',actor:state.order[state.turn],die:question.die});
+  }
   if(state.phase==='question'&&state.question&&now>=state.question.deadline){
     return finishAnswer(state,{kind:'timeout',actor:state.order[state.turn]},now,random);
   }
-  if(state.phase!=='feedback'||!state.feedback||now<state.feedback.until)return null;
+  if((state.phase!=='feedback'&&state.phase!=='power')||!state.feedback||now<state.feedback.until)return null;
   const players={...state.players};
   let turn=state.turn,skipped=[];
   for(let tries=0;tries<state.order.length;tries++){
@@ -123,6 +132,7 @@ export function advanceIfDue(state,now,random=Math.random){
     players[uid]={...participant,skipTurns:participant.skipTurns-1};
     skipped.push(uid);
   }
-  return stamp({...state,players,phase:'ready',turn,rounds:(state.rounds||0)+1,question:null,feedback:null},
-    {kind:'turn',actor:state.order[turn],skipped});
+  const question=makeQuestion(now,random);
+  return stamp({...state,players,phase:'question',turn,rounds:(state.rounds||0)+1,question,feedback:null},
+    {kind:'roll',actor:state.order[turn],die:question.die,skipped});
 }

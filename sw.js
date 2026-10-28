@@ -1,4 +1,4 @@
-const CACHE='tabuada-v9';
+const CACHE='tabuada-v10';
 const ASSETS=[
  './','./index.html','./style.css','./app.js','./weather.js','./sound.js','./audio-test.js',
  './manifest.webmanifest','./assets/path.json','./assets/special-spaces.json',

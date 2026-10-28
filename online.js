@@ -92,9 +92,12 @@ export class FirebaseRooms{
     return normalized;
   }
   async subscribe(code){
-    const {ref,onValue,onChildAdded,set,onDisconnect}=this.sdk;
+    const {ref,get,onValue,onChildAdded,set,onDisconnect}=this.sdk;
     this.roomCode=code;
     const roomRef=ref(this.db,'rooms/'+code);
+    // Restore room metadata before processing queued commands after reconnect.
+    this.room=(await get(roomRef)).val();
+    if(this.room)this.onRoom(this.room,code);
     this.unsub.push(onValue(roomRef,snapshot=>{
       this.room=snapshot.val();
       this.onRoom(this.room,code);

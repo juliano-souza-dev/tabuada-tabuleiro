@@ -93,6 +93,7 @@ export class OnlineUI{
     console.warn('Sala online:',message);
   }
   async connect(kind){
+    this.callbacks.onGesture();
     await this.busy(async()=>{
       $('#online-error').hidden=true;
       const name=$('#online-name').value;
@@ -151,7 +152,13 @@ export class OnlineUI{
         this.prevEvent=event.id;
         this.reactEvent(st,event);
       }
-      this.renderTurn(st);
+      if(st.event?.kind==='power'&&st.phase==='ready'){
+        close('#online-turn');
+        const rev=st.rev;
+        setTimeout(()=>{
+          if(this.active&&this.lastState?.rev===rev)this.renderTurn(st);
+        },1750);
+      }else this.renderTurn(st);
     }
     if(st.phase!=='finished'){
       const who=st.players[st.order[st.turn]];
@@ -246,19 +253,33 @@ export class OnlineUI{
     try{await this.rooms.command(kind,value)}
     catch(error){this.error(error.message);this.renderTurn(this.rooms.room?.state||this.lastState)}
   }
+  announce(message){
+    if(!message)return;
+    if(this.announcementTimer)clearTimeout(this.announcementTimer);
+    const toast=$('#map-toast');
+    toast.textContent=message;toast.hidden=false;
+    this.announcementTimer=setTimeout(()=>{toast.hidden=true;this.announcementTimer=null},2500);
+  }
   reactEvent(state,event){
     const player=state.players[event.actor];
     if(event.kind==='power'){
       const target=state.players[event.target];
       const labels={back2:'voltou 2 casas',back3:'voltou 3 casas',skip:'perderá a próxima rodada'};
-      $('#online-banner').textContent='⚡ '+player.name+' atingiu '+target.name+': '+labels[event.effect]+'!';
+      this.announce('⚡ '+player.name+' atingiu '+target.name+': '+labels[event.effect]+'!');
       this.callbacks.onSound('portal');
       this.powerAnimation(event,state);
     }else if(event.kind==='answer'||event.kind==='victory'){
+      this.announce(event.correct?'✅ '+player.name+' acertou a questão!':'❌ '+player.name+(event.timeout?' ficou sem tempo.':' errou a questão.'));
       this.callbacks.onSound(event.correct?'correct':'wrong');
     }else if(event.kind==='roll')this.callbacks.onSound('dice');
     else if(event.kind==='start')this.callbacks.onSound('start');
-    else if(event.kind==='turn')this.callbacks.onSound('turn');
+    else if(event.kind==='turn'){
+      if(event.skipped?.length){
+        const list=event.skipped.map(uid=>state.players[uid]?.name).join(', ');
+        this.announce('⏳ Perdeu a vez: '+list);
+      }
+      this.callbacks.onSound('turn');
+    }
   }
   async powerAnimation(event,state){
     const root=$('#power-effects');
@@ -287,6 +308,8 @@ export class OnlineUI{
     this.active=false;this.revision=null;this.prevEvent=0;this.lastState=null;
     for(const id of ['online-entry','online-lobby','online-turn','online-victory'])close('#'+id);
     $('#online-banner').hidden=true;
+    if(this.announcementTimer)clearTimeout(this.announcementTimer);
+    $('#map-toast').hidden=true;
     $('#power-effects').replaceChildren();
     const url=new URL(location.href);url.searchParams.delete('room');
     history.replaceState(null,'',url.pathname+url.search+url.hash);

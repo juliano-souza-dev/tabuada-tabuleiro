@@ -32,3 +32,32 @@ A área do mapa ocupa toda a largura e a altura útil. Como as posições das ca
 - `app.js`: estado de turnos e transições entre popups.
 
 Para testar localmente, use `python -m http.server 8000` e abra `http://localhost:8000`.
+
+
+## Multiplayer online com Firebase
+
+O modo **No mesmo celular** continua funcionando sem internet. O modo **Jogar online** permite salas privadas de **2 a 5 jogadores**, cada um no próprio aparelho, com código e link de convite. Dados, multiplicações, tempo de 60 segundos, movimento, casas especiais, superpoderes e vitória são sincronizados pelo **Firebase Realtime Database**. O login é anônimo, sem cadastro.
+
+### Ativação necessária
+
+1. No [Firebase Console](https://console.firebase.google.com/), crie ou selecione um projeto.
+2. Em **Authentication → Sign-in method**, habilite **Anônimo**.
+3. Em **Realtime Database**, crie o banco e escolha a região. Não deixe as regras de teste abertas.
+4. Registre um **app Web** nas configurações do projeto e copie as propriedades oficiais para `firebase-config.js`. Inclua a propriedade `databaseURL`, que vem da tela do Realtime Database. Os valores dessa configuração identificam o aplicativo Web, **não são credenciais de administrador**; a segurança depende das regras de acesso.
+5. Publique **exatamente** as regras fornecidas em `database.rules.json` na aba Regras do Realtime Database. Alternativamente, use o Firebase CLI: `firebase login`, `firebase use --add` e `firebase deploy --only database` (o `firebase.json` já aponta para as regras). Se houver outra regra no mesmo banco, reconcilie antes de substituir.
+6. Recarregue o GitHub Pages ou a PWA instalada para usar a versão nova.
+
+Sem os dados reais do projeto, o jogo informa que as salas online ainda não estão configuradas. **Nenhuma configuração de Firebase foi inventada ou conectada automaticamente.**
+
+### Arquitetura e limites
+
+- `online.js`: integração com Authentication anônimo, salas por código de 7 caracteres, Realtime Database, presença e comandos dos jogadores.
+- `online-logic.js`: regras de turno, respostas, tempo limite, casas especiais, barra de poder, alvos e penalidades.
+- `online-ui.js`: criação/entrada de salas, convite, lobby, janela do jogador atual e feedback dos espectadores.
+- `database.rules.json`: limita entradas aos cinco assentos, proíbe a escrita direta de posições pelos convidados e aceita somente comandos autenticados.
+- A **máquina do anfitrião** valida dados, respostas, movimentações e penalidades usando transações do Realtime Database. O anfitrião **precisa permanecer conectado**; se sair, a partida aguarda sua reconexão.
+- O relógio usa a estimativa de horário do servidor via `.info/serverTimeOffset`. O anfitrião aplica a expiração; em caso de desconexão dele, o prazo é aplicado quando se reconectar.
+- Os comandos são serializados e identificados para evitar duplo processamento. Os convidados **não escrevem diretamente** o estado da partida.
+- Como o anfitrião é uma autoridade no cliente, essa versão é adequada para partidas privadas entre familiares e amigos. Para competição pública e proteção robusta contra trapaças, use **Cloud Functions** ou outro processo de autoridade no servidor; regras do banco sozinhas não garantem que o anfitrião seja honesto.
+- Os participantes voltam à mesma sala com o link e a sessão anônima persistente, desde que continuem no mesmo navegador/aparelho.
+- Como o multiplayer exige conexão, somente o modo local permanece jogável offline.

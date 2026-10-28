@@ -36,7 +36,7 @@ Para testar localmente, use `python -m http.server 8000` e abra `http://localhos
 
 ## Multiplayer online com Firebase
 
-O modo **No mesmo celular** continua funcionando sem internet. O modo **Jogar online** permite salas privadas de **2 a 5 jogadores**, cada um no próprio aparelho, com código e link de convite. Dados, multiplicações, tempo de 60 segundos, movimento, casas especiais, superpoderes e vitória são sincronizados pelo **Firebase Realtime Database**. O login é anônimo, sem cadastro.
+O modo **No mesmo celular** continua funcionando sem internet. O modo **Jogar online** permite salas privadas de **2 a 5 jogadores**, cada um no próprio aparelho, com código e link de convite. Dados automáticos no início de cada turno, multiplicações, tempo de 30 segundos, movimento, casas especiais, superpoderes e vitória são sincronizados pelo **Firebase Realtime Database**. O login é anônimo, sem cadastro.
 
 ### Ativação necessária
 
@@ -61,3 +61,14 @@ Sem os dados reais do projeto, o jogo informa que as salas online ainda não est
 - Como o anfitrião é uma autoridade no cliente, essa versão é adequada para partidas privadas entre familiares e amigos. Para competição pública e proteção robusta contra trapaças, use **Cloud Functions** ou outro processo de autoridade no servidor; regras do banco sozinhas não garantem que o anfitrião seja honesto.
 - Os participantes voltam à mesma sala com o link e a sessão anônima persistente, desde que continuem no mesmo navegador/aparelho.
 - Como o multiplayer exige conexão, somente o modo local permanece jogável offline.
+
+### Regras atuais da partida
+
+- **30 segundos por pergunta** nos modos local e online.
+- No multiplayer, o **dado é lançado automaticamente** na abertura de cada turno; a pergunta aparece logo em seguida.
+- Se a barra estiver cheia (3 acertos), o jogador pode escolher **responder ou lançar o superpoder**. Lançar o poder substitui a resposta: o relógio é cancelado, o ataque é aplicado e a vez passa ao próximo jogador.
+- Ao escolher **Sair da partida**, o participante é retirado da sala e do tabuleiro. Se ele estava respondendo, a pergunta termina e o próximo jogador recebe imediatamente outra.
+- A saída do anfitrião transfere a gestão para outro participante ainda presente, inclusive com partidas em andamento.
+- Quedas involuntárias têm **20 segundos de tolerância** antes que o novo anfitrião ou o anfitrião ainda conectado retire a pessoa da partida. Uma reconexão antes desse prazo preserva a participação.
+- **Se restar somente um jogador**, a partida termina de modo amigável com uma mensagem de encerramento e opção de voltar ao início. Ninguém fica preso em uma sala com um único participante.
+- Todos os jogadores ainda presentes recebem um aviso de saída; o resultado da última partida permanece visível até que o jogador o feche.

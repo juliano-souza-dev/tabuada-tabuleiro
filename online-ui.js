@@ -58,13 +58,9 @@ export class OnlineUI{
       this.callbacks.onGesture();
       await this.busy(async()=>this.rooms.start());
     });
-    $('#online-roll').addEventListener('click',()=>{
-      $('#online-roll').disabled=true;
-      this.callbacks.onGesture();
-      void this.send('roll');
-    });
     $('#online-power').addEventListener('click',()=>{
       $('#online-power').disabled=true;
+      $('#online-options').querySelectorAll('button').forEach(button=>button.disabled=true);
       this.callbacks.onGesture();
       void this.send('power');
     });
@@ -167,22 +163,17 @@ export class OnlineUI{
         this.prevEvent=event.id;
         this.reactEvent(st,event);
       }
-      if(st.event?.kind==='power'&&st.phase==='ready'){
-        close('#online-turn');
-        const rev=st.rev;
-        setTimeout(()=>{
-          if(this.active&&this.lastState?.rev===rev)this.renderTurn(st);
-        },1750);
-      }else this.renderTurn(st);
+      this.renderTurn(st);
     }
     if(st.phase!=='finished'){
       const who=st.players[st.order[st.turn]];
       $('#online-banner').textContent=offline?'⚠️ Anfitrião desconectado. Aguardando reconexão.'
+        :st.phase==='power'?'⚡ '+who.name+' lançou um superpoder!'
         :st.phase==='feedback'?'🎯 '+who.name+' finalizou a resposta.'
-        :st.phase==='question'?'⏱️ '+who.name+' está respondendo.':
-         '🎲 Vez de '+who.name+'.';
+        :st.phase==='question'?'⏱️ '+who.name+' tem 30 segundos para responder.'
+        :'🎲 Preparando a vez de '+who.name+'.';
       const activePlayer=st.order[st.turn]===this.rooms.uid;
-      $('#online-banner').hidden=activePlayer&&!offline;
+      $('#online-banner').hidden=activePlayer&&st.phase!=='power'&&!offline;
     }
   }
   renderTurn(st){
@@ -198,18 +189,17 @@ export class OnlineUI{
       return;
     }
     close('#online-victory');
-    if(!active){close('#online-turn');return}
+    // A power attack replaces this question; the board shows its full animation.
+    if(!active||st.phase==='power'){close('#online-turn');return}
     const person=st.players[this.rooms.uid];
     $('#online-turn-avatar').src=avatar(person.avatar);
     renderText($('#online-turn-name'),person.name);
     renderText($('#online-turn-progress'),'Casa '+(person.pos+1)+' de 40');
     renderText($('#online-power-count'),person.power+'/3');
     powerBar($('#online-power-meter'),person.power);
-    const ready=st.phase==='ready';
     const question=st.question;
-    $('#online-roll').hidden=!ready;
-    $('#online-roll').disabled=false;
-    $('#online-power').hidden=!ready||person.power<3;
+    const canChoosePower=st.phase==='question'&&person.power>=3&&question&&this.rooms.now()<question.deadline;
+    $('#online-power').hidden=!canChoosePower;
     $('#online-power').disabled=false;
     $('#online-question').hidden=!question;
     $('#online-options').hidden=!question;
@@ -246,8 +236,10 @@ export class OnlineUI{
     }else{
       $('#online-feedback').className='answer-feedback';
     }
-    $('#online-help').textContent=ready?'Lance o dado e acerte para avançar!'
-      :st.phase==='question'?'Escolha a resposta antes do tempo acabar.':'Confira o resultado da rodada.';
+    $('#online-help').textContent=st.phase==='question'
+      ?canChoosePower?'Responda ou use o superpoder no lugar da resposta. Você perderá esta vez ao lançá-lo.'
+        :'O dado já foi lançado! Responda em até 30 segundos.'
+      :'Confira o resultado da rodada.';
     open('#online-turn');
     this.updateClock();
   }
@@ -257,10 +249,12 @@ export class OnlineUI{
     if(!state.question)return;
     const remaining=Math.max(0,Math.ceil((state.question.deadline-this.rooms.now())/1000));
     renderText($('#online-countdown'),remaining);
-    $('#online-timer-bar').style.width=(remaining/60*100)+'%';
+    $('#online-timer-bar').style.width=(Math.min(30,remaining)/30*100)+'%';
     $('#online-timer').classList.toggle('urgent',remaining<=10);
     if(remaining===0&&state.phase==='question'){
       $('#online-options').querySelectorAll('button').forEach(button=>button.disabled=true);
+      $('#online-power').disabled=true;
+      $('#online-power').hidden=true;
       $('#online-help').textContent='⏰ Tempo encerrado. Aguardando o resultado...';
     }
   }
@@ -286,7 +280,13 @@ export class OnlineUI{
     }else if(event.kind==='answer'||event.kind==='victory'){
       this.announce(event.correct?'✅ '+player.name+' acertou a questão!':'❌ '+player.name+(event.timeout?' ficou sem tempo.':' errou a questão.'));
       this.callbacks.onSound(event.correct?'correct':'wrong');
-    }else if(event.kind==='roll')this.callbacks.onSound('dice');
+    }else if(event.kind==='roll'){
+      if(event.skipped?.length){
+        const skipped=event.skipped.map(uid=>state.players[uid]?.name||'Jogador').join(', ');
+        this.announce('⏳ Perdeu a vez: '+skipped);
+      }
+      this.callbacks.onSound('dice');
+    }
     else if(event.kind==='start')this.callbacks.onSound('start');
     else if(event.kind==='turn'){
       if(event.skipped?.length){

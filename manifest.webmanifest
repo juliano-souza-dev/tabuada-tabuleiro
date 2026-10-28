@@ -1,1 +1,14 @@
-{"name":"Corrida da Tabuada","short_name":"Tabuada","start_url":"./","display":"standalone","orientation":"landscape","background_color":"#0b1830","theme_color":"#15294c"}
+{
+  "name": "Corrida da Tabuada",
+  "short_name": "Tabuada",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "landscape",
+  "background_color": "#092641",
+  "theme_color": "#092641"
+}

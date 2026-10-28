@@ -1,1 +1,73 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#102942"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css"><title>Corrida da Tabuada</title></head><body><main class="game"><header><h1>🎲 Corrida da Tabuada</h1><p id="turn" aria-live="polite"></p></header><div class="stage"><section class="board-shell"><div id="board" aria-label="Mapa do tabuleiro"><img src="assets/mapa-oficial.webp" alt="Mapa da aventura, do porto ao castelo" draggable="false"><div id="events" aria-hidden="true"></div><div id="pieces" aria-label="Posições dos jogadores"></div></div></section><aside class="hud"><div id="players" class="players"></div><div id="challenge" class="challenge"><div id="event-banner" class="event-banner" aria-live="polite" hidden></div><p id="status" aria-live="polite">Prepare-se!</p><h2 id="question">🎯</h2><div id="options" class="options"></div><div class="controls"><button id="roll" type="button">🎲 Lançar dado</button><button id="restart" type="button">⚙️ Jogadores</button></div></div><div class="event-legend" aria-label="Casas especiais"><span>🪤 Recua</span><span>🕳️ Perde vez</span><span>🌀 Portal</span><span>🎁 Surpresa</span></div></aside></div><dialog id="setup"><h2>Quem vai jogar?</h2><label for="count">Número de jogadores</label><select id="count"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select><div id="roster"></div><button id="start" type="button">Começar partida</button></dialog></main><script type="module" src="app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#092641">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <title>Corrida da Tabuada</title>
+</head>
+<body>
+<main id="game" class="game" aria-label="Corrida da Tabuada">
+  <section id="board" aria-label="Mapa de aventura do porto ao castelo">
+    <img id="map-image" src="assets/mapa-oficial.webp" alt="Mapa de aventura com uma trilha contínua do porto até o castelo" draggable="false">
+    <div id="events" aria-hidden="true"></div>
+    <div id="pieces" aria-label="Posições dos jogadores"></div>
+    <canvas id="weather-canvas" aria-hidden="true"></canvas>
+    <div id="weather-fallback" aria-hidden="true" hidden></div>
+  </section>
+
+  <div class="hud">
+    <div id="players" class="players" aria-label="Posições dos jogadores"></div>
+    <div class="hud-right">
+      <div id="weather-indicator" class="weather-indicator" aria-live="polite">☀️ Ensolarado</div>
+      <button id="restart" type="button" aria-label="Configurar nova partida" title="Configurar nova partida">⚙️</button>
+    </div>
+  </div>
+  <div id="map-toast" class="map-toast" role="status" aria-live="polite" hidden></div>
+  <div id="orientation-hint" class="orientation-hint" aria-live="polite">
+    <span class="rotate-glyph">↻</span>
+    <strong>Gire o celular para jogar na horizontal</strong>
+    <small>O mapa foi preparado para o modo paisagem.</small>
+  </div>
+
+  <dialog id="setup" class="game-dialog setup-dialog" aria-labelledby="setup-heading">
+    <h2 id="setup-heading">🎲 Quem vai jogar?</h2>
+    <p>Escolha de 2 a 5 jogadores e seus avatares.</p>
+    <label for="count">Quantidade de jogadores</label>
+    <select id="count"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select>
+    <div id="roster"></div>
+    <button id="start" class="primary-button" type="button">Começar aventura!</button>
+  </dialog>
+
+  <dialog id="turn-dialog" class="game-dialog turn-dialog" aria-labelledby="turn-name">
+    <div class="turn-player">
+      <img id="turn-avatar" alt="" width="72" height="84">
+      <div>
+        <span id="turn-number" class="turn-eyebrow">Sua vez!</span>
+        <h2 id="turn-name">Jogador</h2>
+        <p id="turn-progress">Casa 1 de 40</p>
+      </div>
+    </div>
+    <div id="die" class="die" aria-label="Dado">🎲</div>
+    <p id="turn-help">Lance o dado e acerte a multiplicação para avançar!</p>
+    <h3 id="question" class="question" hidden></h3>
+    <div id="options" class="options" hidden></div>
+    <button id="roll" class="primary-button roll-button" type="button">🎲 Lançar dado</button>
+    <button id="reconfigure" class="quiet-button" type="button">Trocar jogadores</button>
+  </dialog>
+
+  <dialog id="victory-dialog" class="game-dialog victory-dialog" aria-labelledby="victory-heading">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <h2 id="victory-heading">Temos um vencedor!</h2>
+    <img id="winner-avatar" class="winner-avatar" alt="" width="90" height="110">
+    <p id="winner-message" aria-live="polite"></p>
+    <button id="play-again" class="primary-button" type="button">🎲 Jogar novamente</button>
+  </dialog>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

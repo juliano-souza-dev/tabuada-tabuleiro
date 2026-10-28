@@ -1,4 +1,4 @@
-const CACHE='tabuada-v12';
+const CACHE='tabuada-v13';
 const ASSETS=[
  './','./index.html','./style.css','./app.js','./weather.js','./sound.js','./audio-test.js',
  './online.js','./online-logic.js','./online-ui.js','./firebase-config.js',

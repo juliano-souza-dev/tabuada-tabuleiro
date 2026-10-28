@@ -106,3 +106,5 @@ button:disabled{opacity:.55;cursor:not-allowed}
   .token{transition:none}
   .special-marker.activated,.map-toast,.game-dialog,.die.rolling,.trophy{animation:none}
 }
+
+#weather-canvas[hidden]{display:none}

@@ -209,15 +209,9 @@ function startGame(){
   configureFullscreen();
   players=[...$('#roster').children].map((box,index)=>({
     name:box.querySelector('input').value.trim()||'Jogador '+(index+1),
-    avatar:box.querySelector('.selected')?.querySelector('button')?.title||
-      box.querySelector('.selected')?.title||defaults[index],
+    avatar:box.querySelector('.avatar-choices button.selected')?.title||defaults[index],
     pos:0,skipTurns:0
   }));
-  // The selected button is the source of truth; it owns the actual SVG asset name.
-  players.forEach((player,index)=>{
-    const selected=$('#roster').children[index].querySelector('.avatar-choices button.selected');
-    player.avatar=selected?.title||defaults[index];
-  });
   turn=0;
   pending=null;
   completedTurns=0;

@@ -79,7 +79,7 @@ const PARTICLE_FRAGMENT=[
   '  color=vec3(1.0,0.89,0.52);',
   ' }else if(vKind<1.5){',
   '  float line=abs(p.x+p.y*0.38);',
-  '  alpha=(1.0-smoothstep(0.02,0.10,line))*smoothstep(0.49,0.25,abs(p.y))*0.70;',
+  '  alpha=(1.0-smoothstep(0.02,0.10,line))*(1.0-smoothstep(0.25,0.49,abs(p.y)))*0.70;',
   '  color=vec3(0.80,0.92,1.0);',
   ' }else{',
   '  alpha=(1.0-smoothstep(0.25,0.50,length(p)))*0.90;',

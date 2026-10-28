@@ -1,5 +1,11 @@
 {
   "database": {
     "rules": "database.rules.json"
+  },
+  "auth": {
+    "authorizedDomains": ["localhost"],
+    "providers": {
+      "anonymous": true
+    }
   }
 }

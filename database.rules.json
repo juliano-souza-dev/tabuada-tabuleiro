@@ -1,0 +1,73 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() === auth.uid && newData.child('state/phase').val() === 'lobby') || data.child('hostId').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['hostId','createdAt','state','seats']) && (!data.exists() || newData.child('hostId').val() === data.child('hostId').val())",
+        "hostId": {
+          ".validate": "newData.isString() && newData.val().length > 5"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        "seats": {
+          "$seat": {
+            ".write": "auth != null && ($seat === '1' || $seat === '2' || $seat === '3' || $seat === '4') && !data.exists() && root.child('rooms/'+$code+'/state/phase').val() === 'lobby' && newData.child('uid').val() === auth.uid && root.child('rooms/'+$code+'/seats/0/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/1/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/2/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/3/uid').val() !== auth.uid && root.child('rooms/'+$code+'/seats/4/uid').val() !== auth.uid",
+            ".validate": "newData.hasChildren(['uid','name','avatar','joinedAt'])",
+            "uid": {
+              ".validate": "newData.isString() && newData.val().length > 5"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 18"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().matches(/^(masculino|feminino)-0[1-5]$/)"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "state": {
+          ".validate": "newData.hasChildren(['phase','rev','turn','rounds']) && newData.child('phase').isString() && (newData.child('phase').val() === 'lobby' || newData.child('phase').val() === 'ready' || newData.child('phase').val() === 'question' || newData.child('phase').val() === 'feedback' || newData.child('phase').val() === 'finished')"
+        },
+        "commands": {
+          "$command": {
+            ".write": "auth != null && !data.exists() && root.child('rooms/'+$code+'/state/phase').val() !== 'lobby' && (root.child('rooms/'+$code+'/seats/0/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/1/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/2/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/3/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/4/uid').val() === auth.uid) && newData.child('actor').val() === auth.uid",
+            ".validate": "newData.hasChildren(['actor','kind','value','at']) && newData.child('kind').isString() && newData.child('kind').val().matches(/^(roll|answer|power)$/) && newData.child('value').isNumber() && newData.child('value').val() >= 0 && newData.child('value').val() <= 100",
+            "actor": {
+              ".validate": "newData.isString() && newData.val().length > 5"
+            },
+            "kind": {
+              ".validate": "newData.isString() && newData.val().matches(/^(roll|answer|power)$/)"
+            },
+            "value": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+            },
+            "at": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "presence": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && (root.child('rooms/'+$code+'/seats/0/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/1/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/2/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/3/uid').val() === auth.uid || root.child('rooms/'+$code+'/seats/4/uid').val() === auth.uid)",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

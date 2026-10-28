@@ -2,6 +2,7 @@ import route from './assets/path.json' with {type:'json'};
 import specialSpaces from './assets/special-spaces.json' with {type:'json'};
 import {WeatherEngine} from './weather.js';
 import {GameAudio} from './sound.js';
+import {OnlineUI} from './online-ui.js';
 
 const $ = selector => document.querySelector(selector);
 const avatar = name => 'assets/avatars/'+name+'.svg';
@@ -525,7 +526,7 @@ $('#start').addEventListener('click',startGame);
 $('#roll').addEventListener('click',rollDice);
 $('#power-launch').addEventListener('click',launchSuperpower);
 $('#reconfigure').addEventListener('click',openSetup);
-$('#restart').addEventListener('click',openSetup);
+$('#restart').addEventListener('click',()=>{if(onlineUI.active)void onlineUI.leave();else openSetup()});
 $('#play-again').addEventListener('click',openSetup);
 $('#audio-toggle').addEventListener('click',()=>{const enabled=!sound.settings.enabled;sound.set('enabled',enabled);if(enabled)void sound.unlock()});
 $('#audio-settings').addEventListener('click',()=>$('#sound-dialog').showModal());
@@ -538,8 +539,57 @@ for(const id of ['setup','turn-dialog','victory-dialog']){
   $('#'+id).addEventListener('cancel',event=>event.preventDefault());
 }
 renderSpecialMarkers();
-$('#setup').showModal();
+$('#mode-dialog').showModal();
 renderRoster();
+let onlineAnimationVersion=0;
+const onlineUI=new OnlineUI({
+  onLocal:()=>{
+    phase='setup';
+    $('#setup').showModal();
+    renderRoster();
+  },
+  onExit:()=>{
+    onlineAnimationVersion++;
+    stopQuestionTimer();
+    players=[];turn=0;pending=null;completedTurns=0;phase='setup';
+    clearToast();
+    $('#pieces').replaceChildren();
+    renderPlayers();
+    document.body.classList.remove('playing');
+  },
+  onGesture:()=>{void sound.unlock()},
+  onSound:name=>sound.play(name),
+  onBoard:state=>{
+    onlineAnimationVersion++;
+    const version=onlineAnimationVersion;
+    const order=Array.isArray(state.order)?state.order:Object.values(state.order||{});
+    players=order.map(uid=>({...state.players[uid],uid}));
+    turn=state.turn;
+    completedTurns=state.rounds||0;
+    phase='online';
+    const event=state.event;
+    const impactedId=event?.kind==='power'?event.target:
+      event?.kind==='answer'||event?.kind==='victory'?event.actor:null;
+    const index=players.findIndex(p=>p.uid===impactedId);
+    const destination=index>=0?players[index].pos:null;
+    const movement=index>=0&&typeof event.from==='number'&&typeof event.to==='number'&&event.from!==event.to;
+    if(movement)players[index].pos=event.from;
+    render();
+    setWeather();
+    if(movement){
+      const participant=players[index];
+      const direction=Math.sign(destination-participant.pos);
+      void (async()=>{
+        while(participant.pos!==destination&&version===onlineAnimationVersion){
+          participant.pos+=direction;
+          renderTokens();
+          await sleep(215);
+        }
+        if(version===onlineAnimationVersion){participant.pos=destination;render()}
+      })();
+    }
+  }
+});
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }

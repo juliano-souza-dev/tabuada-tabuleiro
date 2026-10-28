@@ -145,6 +145,12 @@ export class FirebaseRooms{
     }
     const now=this.now(),GRACE_MS=20000;
     for(const uid of members){
+      if(uid!==this.uid&&this.room.presence?.[uid]===false){
+        // An explicit departure is different from a dropped connection.
+        this.offlineSince.delete(uid);
+        await this.removeParticipant(uid);
+        return true;
+      }
       if(uid===this.uid||this.room.presence?.[uid]){
         this.offlineSince.delete(uid);
         continue;
@@ -264,9 +270,14 @@ export class FirebaseRooms{
           if(!tx.committed)throw Error('Não foi possível transferir a sala. Tente novamente.');
         }else{
           // A guest can only delete their own seat. The host updates the match.
+          // The old database rules already allow writing this presence flag.
+          // The host will remove the seat within its next reconciliation tick.
           await set(presence,false);
           const slot=Object.keys(room?.seats||{}).find(index=>room.seats[index]?.uid===uid);
-          if(slot!==undefined)await remove(ref(this.db,base+'/seats/'+slot));
+          if(slot!==undefined){
+            try{await remove(ref(this.db,base+'/seats/'+slot))}
+            catch(error){console.info('Anfitrião concluirá a saída do jogador.',error)}
+          }
         }
       }
     }catch(error){

@@ -1,6 +1,6 @@
-const CACHE='tabuada-v6';
+const CACHE='tabuada-v8';
 const ASSETS=[
- './','./index.html','./style.css','./app.js','./weather.js','./sound.js',
+ './','./index.html','./style.css','./app.js','./weather.js','./sound.js','./audio-test.js',
  './manifest.webmanifest','./assets/path.json','./assets/special-spaces.json',
  './assets/mapa-oficial.webp',
  ...['trap','quicksand','portal','chest'].map(n=>'./assets/events/'+n+'.svg'),

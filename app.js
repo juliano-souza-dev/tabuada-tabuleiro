@@ -382,7 +382,7 @@ $('#audio-settings').addEventListener('click',()=>$('#sound-dialog').showModal()
 $('#sound-close').addEventListener('click',()=>$('#sound-dialog').close());
 $('#sound-enabled').addEventListener('change',event=>{sound.set('enabled',event.target.checked);if(event.target.checked)void sound.unlock()});
 for(const name of ['master','music','effects','ambience'])$('#sound-'+name).addEventListener('input',event=>sound.set(name,Number(event.target.value)/100));
-$('#sound-test').addEventListener('click',()=>{void sound.unlock().then(()=>sound.play('correct'))});
+$('#sound-test').addEventListener('click',()=>{void sound.unlock().then(()=>{sound.play('correct');window.testHowlerSound?.()})});
 for(const id of ['setup','turn-dialog','victory-dialog']){
   // Prevent Escape/back from silently skipping the active turn or victory result.
   $('#'+id).addEventListener('cancel',event=>event.preventDefault());

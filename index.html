@@ -45,7 +45,7 @@
 <label for="sound-music">🎵 Música <output id="sound-music-value">35%</output></label><input id="sound-music" type="range" min="0" max="100" value="35">
 <label for="sound-effects">✨ Efeitos <output id="sound-effects-value">85%</output></label><input id="sound-effects" type="range" min="0" max="100" value="85">
 <label for="sound-ambience">🌧️ Ambiente <output id="sound-ambience-value">45%</output></label><input id="sound-ambience" type="range" min="0" max="100" value="45">
-</div><button id="sound-test" class="quiet-button" type="button">▶ Testar som</button>
+</div><p id="sound-status" role="status" aria-live="polite"></p><button id="sound-test" class="quiet-button" type="button">▶ Testar som</button>
 <button id="sound-close" class="primary-button" type="button">Concluir</button>
 </dialog>
   <dialog id="setup" class="game-dialog setup-dialog" aria-labelledby="setup-heading">
@@ -82,6 +82,6 @@
     <button id="play-again" class="primary-button" type="button">🎲 Jogar novamente</button>
   </dialog>
 </main>
-<script type="module" src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script><script src="audio-test.js"></script><script type="module" src="app.js"></script>
 </body>
 </html>

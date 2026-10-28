@@ -7,12 +7,22 @@ export const EVENTS=Object.fromEntries(specialSpaces.map(({position,type})=>[pos
 export const bounded=value=>Math.max(0,Math.min(LAST_SQUARE,value));
 const roll=(min,max,random)=>Math.floor(random()*(max-min+1))+min;
 const optionsFor=(answer,random)=>{
-  const choices=new Set([answer]);
-  while(choices.size<4){
-    const candidate=answer+roll(-14,14,random);
-    if(candidate>0&&candidate<=100)choices.add(candidate);
+  const candidates=[];
+  // Generate finite, distinct alternatives even under a repeated random value.
+  for(let delta=1;delta<=20;delta++){
+    if(answer+delta<=100)candidates.push(answer+delta);
+    if(answer-delta>0)candidates.push(answer-delta);
   }
-  return [...choices].sort(()=>random()-.5);
+  for(let i=candidates.length-1;i>0;i--){
+    const j=roll(0,i,random);
+    [candidates[i],candidates[j]]=[candidates[j],candidates[i]];
+  }
+  const choices=[answer,...candidates.slice(0,3)];
+  for(let i=choices.length-1;i>0;i--){
+    const j=roll(0,i,random);
+    [choices[i],choices[j]]=[choices[j],choices[i]];
+  }
+  return choices;
 };
 const names=['masculino-01','masculino-02','masculino-03','masculino-04','masculino-05','feminino-01','feminino-02','feminino-03','feminino-04','feminino-05'];
 const stamp=(state,data)=>({...state,rev:(state.rev||0)+1,event:{id:(state.rev||0)+1,...data}});

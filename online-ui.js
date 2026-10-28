@@ -255,6 +255,12 @@ export class OnlineUI{
         :'O dado já foi lançado! Responda em até 30 segundos.'
       :'Confira o resultado da rodada.';
     open('#online-turn');
+    if(st.event?.kind==='roll'&&st.phase==='question'){
+      const die=$('#online-die');
+      die.classList.remove('rolling');
+      void die.offsetWidth;
+      die.classList.add('rolling');
+    }
     this.updateClock();
   }
   updateClock(){
@@ -307,6 +313,8 @@ export class OnlineUI{
         const skipped=event.skipped.map(uid=>state.players[uid]?.name||'Jogador').join(', ');
         this.announce('⏳ Perdeu a vez: '+skipped);
       }
+      const roller=state.players[event.actor]?.name||'Jogador';
+      this.announce('🎲 '+roller+' lançou o dado: '+event.die+'!');
       this.callbacks.onSound('dice');
     }
     else if(event.kind==='start')this.callbacks.onSound('start');

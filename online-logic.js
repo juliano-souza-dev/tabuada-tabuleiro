@@ -105,7 +105,7 @@ export function applyCommand(state,command,now,random=Math.random){
     const hit=players[target],from=hit.pos;
     if(effect==='skip')hit.skipTurns++;
     else hit.pos=bounded(hit.pos-(effect==='back2'?2:3));
-    return stamp({...state,players,phase:'power',question:null,feedback:{kind:'power',until:now+2700}},
+    return stamp({...state,players,phase:'feedback',question:null,feedback:{kind:'power',until:now+2700}},
       {kind:'power',actor,target,effect,origin:players[actor].pos,from,to:hit.pos});
   }
   return null;

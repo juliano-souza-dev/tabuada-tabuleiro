@@ -27,7 +27,7 @@ export class FirebaseRooms{
   get amHost(){return Boolean(this.room&&this.room.hostId===this.uid)}
   get configured(){return Boolean(firebaseConfig.apiKey&&firebaseConfig.appId&&firebaseConfig.projectId&&firebaseConfig.databaseURL)}
   async connect(){
-    if(!this.configured)throw Error('Configure o Firebase em firebase-config.js para ativar as salas online.');
+    if(!this.configured)throw Error('O modo online ainda não foi ativado. Peça ao administrador para configurar as salas.');
     if(this.uid)return;
     try{
       const [appModule,authModule,dbModule]=await Promise.all([

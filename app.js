@@ -202,7 +202,7 @@ function renderPlayers(){
     const name=document.createElement('strong');
     name.textContent=player.name;
     const count=document.createElement('small');
-    count.textContent=(player.pos+1)+'/40'+(player.skipTurns?' 🕳️':'');
+    count.textContent=(player.pos+1)+'/40'+(player.skipTurns?' ⏳':'');
     const info=document.createElement('span');
     info.className='player-info';
     const top=document.createElement('span');
@@ -288,7 +288,7 @@ function startGame(){
   players=[...$('#roster').children].map((box,index)=>({
     name:box.querySelector('input').value.trim()||'Jogador '+(index+1),
     avatar:box.querySelector('.avatar-choices button.selected')?.title||defaults[index],
-    pos:0,skipTurns:0,power:0
+    pos:0,skipTurns:0,skipReasons:[],power:0
   }));
   turn=0;
   pending=null;
@@ -325,6 +325,7 @@ async function triggerSpecial(){
   }else if(type==='quicksand'){
     sound.play('quicksand');
     player.skipTurns+=1;
+    player.skipReasons.push('quicksand');
     message='🕳️ '+player.name+' ficou na areia movediça e perderá a próxima vez!';
   }else if(type==='portal'){
     sound.play('portal');
@@ -365,8 +366,9 @@ async function goToNextPlayer(){
     render();
     if(!current.skipTurns)break;
     current.skipTurns-=1;
+    const skipReason=current.skipReasons.shift();
     sound.play('skip');
-    showToast('🕳️ '+current.name+' perdeu a vez por causa da areia movediça!',0);
+    showToast((skipReason==='power'?'⚡ ':'🕳️ ')+current.name+(skipReason==='power'?' perdeu a vez por causa do superpoder!':' perdeu a vez por causa da areia movediça!'),0);
     renderPlayers();
     await sleep(1250);
     completedTurns++;
@@ -469,6 +471,7 @@ async function launchSuperpower(){
   impact.remove();
   if(effect==='skip'){
     target.skipTurns+=1;
+    target.skipReasons.push('power');
     showToast('⚡ '+target.name+' foi atingido e perderá a próxima rodada!',0);
     render();
   }else{

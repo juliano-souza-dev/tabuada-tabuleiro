@@ -110,6 +110,48 @@ export function applyCommand(state,command,now,random=Math.random){
   }
   return null;
 }
+export function removePlayer(state,uid,now,random=Math.random){
+  if(!state?.order?.includes(uid))return null;
+  const removed=state.players[uid];
+  const order=state.order.filter(id=>id!==uid);
+  const players={...state.players};
+  delete players[uid];
+  const info={departed:uid,departedName:removed?.name||'Um jogador'};
+  if(order.length===0){
+    return stamp({...state,order:[],players,phase:'finished',question:null,feedback:null,winner:null,endReason:'empty'},
+      {kind:'leave',...info});
+  }
+  if(order.length===1){
+    return stamp({...state,order,players,turn:0,phase:'finished',question:null,feedback:null,
+      winner:order[0],endReason:'last-player',endedAt:now},
+      {kind:'last-player',actor:order[0],...info});
+  }
+  const wasActive=state.order[state.turn]===uid;
+  if(state.phase==='finished'){
+    const lastWinner=state.players[state.winner];
+    return stamp({...state,order,players,turn:Math.max(0,order.indexOf(state.order[state.turn])),
+      winnerInfo:state.winnerInfo||(lastWinner?{name:lastWinner.name,avatar:lastWinner.avatar}:null)},
+      {kind:'leave',...info});
+  }
+  if(!wasActive){
+    // Other players may leave without stealing the active player's remaining time.
+    return stamp({...state,order,players,turn:order.indexOf(state.order[state.turn])},
+      {kind:'leave',actor:state.order[state.turn],...info});
+  }
+  // The player who was answering has gone; advance immediately to the next player.
+  let turn=state.turn%order.length;
+  const skipped=[];
+  for(let tries=0;tries<order.length*2;tries++){
+    const next=players[order[turn]];
+    if(!next?.skipTurns)break;
+    players[order[turn]]={...next,skipTurns:next.skipTurns-1};
+    skipped.push(order[turn]);
+    turn=(turn+1)%order.length;
+  }
+  const question=makeQuestion(now,random);
+  return stamp({...state,order,players,turn,phase:'question',question,feedback:null},
+    {kind:'roll',actor:order[turn],die:question.die,skipped,...info});
+}
 export function advanceIfDue(state,now,random=Math.random){
   if(!state)return null;
   // Recover rooms started by a previous version which waited for a manual roll.

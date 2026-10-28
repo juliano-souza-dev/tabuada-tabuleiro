@@ -114,7 +114,7 @@ export class FirebaseRooms{
     const fresh=(await get(ref(this.db,this.roomPath('seats')))).val()||{};
     const initial=newGame(fresh);
     await runTransaction(ref(this.db,this.roomPath('state')),state=>{
-      if(!state||state.phase!=='lobby')return;
+      if(!state||(state.phase!=='lobby'&&state.phase!=='finished'))return;
       return initial;
     },{applyLocally:false});
   }

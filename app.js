@@ -550,6 +550,7 @@ const onlineUI=new OnlineUI({
   },
   onExit:()=>{
     onlineAnimationVersion++;
+    sound.stop();
     stopQuestionTimer();
     players=[];turn=0;pending=null;completedTurns=0;phase='setup';
     clearToast();

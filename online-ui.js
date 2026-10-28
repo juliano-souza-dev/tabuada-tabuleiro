@@ -150,7 +150,17 @@ export class OnlineUI{
     }
     close('#online-entry');close('#online-lobby');
     if(!room.state?.order?.includes(this.rooms.uid)){
-      this.error('Você não participa desta partida.');return;
+      close('#online-turn');close('#online-victory');
+      const notice=$('#online-banner');
+      notice.hidden=false;
+      notice.textContent='👋 Sua participação foi encerrada. Voltando ao início...';
+      if(!this.departureTimer){
+        this.departureTimer=setTimeout(()=>{
+          this.departureTimer=null;
+          if(this.active&&!this.rooms.room?.state?.order?.includes(this.rooms.uid))void this.leave();
+        },1800);
+      }
+      return;
     }
     document.body.classList.add('playing');
     const offline=!room.presence?.[room.hostId];
@@ -351,6 +361,7 @@ export class OnlineUI{
     }
     await this.rooms.leave();
     this.active=false;this.revision=null;this.prevEvent=0;this.lastState=null;
+    if(this.departureTimer){clearTimeout(this.departureTimer);this.departureTimer=null}
     for(const id of ['online-entry','online-lobby','online-turn','online-victory'])close('#'+id);
     $('#online-banner').hidden=true;
     if(this.announcementTimer)clearTimeout(this.announcementTimer);
